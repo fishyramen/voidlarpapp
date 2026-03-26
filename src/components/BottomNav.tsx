@@ -1,4 +1,4 @@
-import { Home, Grid2x2, ArrowLeftRight, Clock, Compass } from "lucide-react";
+import { Home, ArrowLeftRight, Clock, Compass } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 
 const BottomNav = () => {
@@ -6,7 +6,6 @@ const BottomNav = () => {
 
   const navItems = [
     { icon: Home, label: "Home", id: "wallet" },
-    { icon: Grid2x2, label: "Apps", id: "apps" },
     { icon: ArrowLeftRight, label: "Swap", id: "swap" },
     { icon: Clock, label: "Activity", id: "activity" },
     { icon: Compass, label: "Explore", id: "explore" },

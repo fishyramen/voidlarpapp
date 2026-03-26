@@ -7,6 +7,9 @@ import BottomNav from "@/components/BottomNav";
 import Settings from "@/components/Settings";
 import SwapScreen from "@/components/SwapScreen";
 import ActivityScreen from "@/components/ActivityScreen";
+import SendScreen from "@/components/SendScreen";
+import ReceiveScreen from "@/components/ReceiveScreen";
+import BuyScreen from "@/components/BuyScreen";
 import Onboarding from "@/components/Onboarding";
 import { useWallet } from "@/context/WalletContext";
 
@@ -33,6 +36,27 @@ const Index = () => {
           <>
             <WalletHeader onOpenSettings={() => setShowSettings(true)} />
             <ActivityScreen />
+            <BottomNav />
+          </>
+        );
+      case "send":
+        return (
+          <>
+            <SendScreen />
+            <BottomNav />
+          </>
+        );
+      case "receive":
+        return (
+          <>
+            <ReceiveScreen />
+            <BottomNav />
+          </>
+        );
+      case "buy":
+        return (
+          <>
+            <BuyScreen />
             <BottomNav />
           </>
         );

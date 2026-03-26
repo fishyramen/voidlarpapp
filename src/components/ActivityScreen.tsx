@@ -1,4 +1,4 @@
-import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, DollarSign } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 
 const ActivityScreen = () => {
@@ -9,15 +9,17 @@ const ActivityScreen = () => {
       case "send": return <ArrowUpRight className="w-4 h-4" />;
       case "receive": return <ArrowDownLeft className="w-4 h-4" />;
       case "swap": return <ArrowLeftRight className="w-4 h-4" />;
+      case "buy": return <DollarSign className="w-4 h-4" />;
       default: return null;
     }
   };
 
   const getLabel = (tx: typeof transactions[0]) => {
     switch (tx.type) {
-      case "send": return `Sent ${tx.fromToken || ""}`;
-      case "receive": return `Received ${tx.toToken || ""}`;
+      case "send": return `Sent ${tx.fromToken || ""}${tx.address ? ` to @${tx.address}` : ""}`;
+      case "receive": return `Received ${tx.toToken || ""}${tx.address ? ` from @${tx.address}` : ""}`;
       case "swap": return `Swapped ${tx.fromToken} → ${tx.toToken}`;
+      case "buy": return `Bought ${tx.toToken}`;
       default: return "";
     }
   };
@@ -42,7 +44,7 @@ const ActivityScreen = () => {
             <ArrowLeftRight className="w-6 h-6 text-muted-foreground" />
           </div>
           <p className="text-foreground font-medium mb-1">No activity yet</p>
-          <p className="text-sm text-muted-foreground">Your transactions will appear here. Try swapping some tokens!</p>
+          <p className="text-sm text-muted-foreground">Your transactions will appear here</p>
         </div>
       ) : (
         <div className="space-y-1">
@@ -52,6 +54,7 @@ const ActivityScreen = () => {
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center ${
                   tx.type === "send" ? "bg-destructive/15 text-destructive" :
                   tx.type === "receive" ? "bg-success/15 text-success" :
+                  tx.type === "buy" ? "bg-success/15 text-success" :
                   "bg-primary/15 text-primary"
                 }`}>
                   {getIcon(tx.type)}
@@ -62,7 +65,9 @@ const ActivityScreen = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className={`text-sm font-medium ${tx.type === "receive" ? "text-success" : "text-foreground"}`}>
+                <p className={`text-sm font-medium ${
+                  tx.type === "receive" || tx.type === "buy" ? "text-success" : "text-foreground"
+                }`}>
                   {tx.type === "receive" ? "+" : tx.type === "send" ? "-" : ""}${tx.value.toFixed(2)}
                 </p>
               </div>
