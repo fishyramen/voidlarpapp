@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@/context/WalletContext";
 import phantomLogo from "@/assets/phantom-logo.png";
 
@@ -8,10 +8,8 @@ const Onboarding = () => {
   const [name, setName] = useState("");
   const [step, setStep] = useState(0);
 
-  const handleContinue = () => {
-    if (step === 0) {
-      setStep(1);
-    } else if (name.trim()) {
+  const handleCreate = () => {
+    if (name.trim()) {
       setUsername(name.trim());
       setHasOnboarded(true);
     }
@@ -19,60 +17,88 @@ const Onboarding = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-[400px] h-[780px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col items-center justify-center shadow-2xl px-8">
-        {step === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center text-center gap-6"
-          >
-            <div className="w-24 h-24 rounded-2xl overflow-hidden phantom-glow">
-              <img src={phantomLogo} alt="Phantom" className="w-full h-full object-cover" />
-            </div>
-            <h1 className="text-3xl font-bold text-foreground">Welcome to Phantom</h1>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              A friendly crypto wallet built for learning. Explore tokens, manage your portfolio, and understand how crypto works.
-            </p>
-            <button
-              onClick={handleContinue}
-              className="w-full py-3.5 rounded-xl phantom-gradient text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
+      <div className="w-full max-w-[400px] h-[780px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
+        <AnimatePresence mode="wait">
+          {step === 0 && (
+            <motion.div
+              key="welcome"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col"
             >
-              Get Started
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col items-center text-center gap-6 w-full"
-          >
-            <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center">
-              <div className="w-12 h-12 rounded-full overflow-hidden">
-                <img src={phantomLogo} alt="Phantom" className="w-full h-full object-cover" />
+              {/* Purple top area like real Phantom */}
+              <div className="flex-1 flex flex-col items-center justify-center px-8 bg-[hsl(263,67%,58%)] rounded-b-[2rem]">
+                <motion.img
+                  src={phantomLogo}
+                  alt="Phantom"
+                  className="w-20 h-20 rounded-2xl mb-4"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2, type: "spring" }}
+                />
+                <h1 className="text-2xl font-bold text-primary-foreground mb-1">Phantom</h1>
+                <p className="text-primary-foreground/70 text-sm">A crypto wallet reimagined</p>
               </div>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Choose a Username</h2>
-              <p className="text-muted-foreground text-sm">This is how you'll appear in the wallet</p>
-            </div>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleContinue()}
-              placeholder="Enter your username"
-              maxLength={20}
-              className="w-full py-3 px-4 rounded-xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground text-center text-lg font-medium focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <button
-              onClick={handleContinue}
-              disabled={!name.trim()}
-              className="w-full py-3.5 rounded-xl phantom-gradient text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-40"
+              <div className="p-6 space-y-3">
+                <button
+                  onClick={() => setStep(1)}
+                  className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
+                >
+                  Create a new wallet
+                </button>
+                <button
+                  onClick={() => setStep(1)}
+                  className="w-full py-3.5 rounded-xl bg-secondary text-foreground font-semibold text-sm"
+                >
+                  I already have a wallet
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 1 && (
+            <motion.div
+              key="username"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col p-6"
             >
-              Continue
-            </button>
-          </motion.div>
-        )}
+              <button
+                onClick={() => setStep(0)}
+                className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-8"
+              >
+                ←
+              </button>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Create your account</h2>
+              <p className="text-muted-foreground text-sm mb-8">Choose a username for your wallet</p>
+
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">USERNAME</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                placeholder="@username"
+                maxLength={20}
+                autoFocus
+                className="w-full py-3.5 px-4 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary"
+              />
+              <p className="text-xs text-muted-foreground mt-2">This is how others will find you on Phantom</p>
+
+              <div className="flex-1" />
+
+              <button
+                onClick={handleCreate}
+                disabled={!name.trim()}
+                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-30 transition-opacity"
+              >
+                Continue
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
