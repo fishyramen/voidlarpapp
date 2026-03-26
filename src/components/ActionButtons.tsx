@@ -1,12 +1,11 @@
-import { QrCode, Send, ArrowLeftRight, DollarSign, MoreHorizontal } from "lucide-react";
+import { QrCode, Send, ArrowLeftRight, DollarSign } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 
 const actions = [
-  { icon: QrCode, label: "Receive", tab: "" },
-  { icon: Send, label: "Send", tab: "" },
+  { icon: QrCode, label: "Receive", tab: "receive" },
+  { icon: Send, label: "Send", tab: "send" },
   { icon: ArrowLeftRight, label: "Swap", tab: "swap" },
-  { icon: DollarSign, label: "Buy", tab: "" },
-  { icon: MoreHorizontal, label: "More", tab: "" },
+  { icon: DollarSign, label: "Buy", tab: "buy" },
 ];
 
 const ActionButtons = () => {
@@ -17,7 +16,7 @@ const ActionButtons = () => {
       {actions.map((action) => (
         <button
           key={action.label}
-          onClick={() => action.tab && setActiveTab(action.tab)}
+          onClick={() => setActiveTab(action.tab)}
           className="flex flex-col items-center gap-1.5"
         >
           <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-foreground hover:bg-muted transition-colors">

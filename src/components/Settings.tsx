@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Plus, Minus, LogOut } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 
 interface SettingsProps {
@@ -7,10 +7,8 @@ interface SettingsProps {
 }
 
 const Settings = ({ onClose }: SettingsProps) => {
-  const { username, setUsername, totalBalance, cashBalance, setCashBalance, tokens, setTokens } = useWallet();
+  const { username, totalBalance, cashBalance, setCashBalance, tokens, logout } = useWallet();
   const [amount, setAmount] = useState("");
-  const [editingName, setEditingName] = useState(false);
-  const [newName, setNewName] = useState(username);
 
   const handleAdd = () => {
     const val = parseFloat(amount);
@@ -24,13 +22,6 @@ const Settings = ({ onClose }: SettingsProps) => {
     if (!val || val <= 0) return;
     setCashBalance(prev => Math.max(0, prev - val));
     setAmount("");
-  };
-
-  const handleSaveName = () => {
-    if (newName.trim()) {
-      setUsername(newName.trim());
-      setEditingName(false);
-    }
   };
 
   const presetAmounts = [100, 500, 1000, 5000];
@@ -47,31 +38,16 @@ const Settings = ({ onClose }: SettingsProps) => {
       <div className="flex-1 overflow-y-auto px-4 space-y-4 pb-6">
         {/* Username */}
         <div className="bg-secondary rounded-2xl p-4">
-          <label className="text-xs text-muted-foreground font-medium mb-2 block uppercase tracking-wide">Username</label>
-          {editingName ? (
-            <div className="flex gap-2">
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                className="flex-1 py-2 px-3 rounded-xl bg-background text-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                maxLength={20}
-              />
-              <button onClick={handleSaveName} className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold">Save</button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <span className="text-foreground font-medium">{username}</span>
-              <button onClick={() => setEditingName(true)} className="text-xs text-primary font-medium">Edit</button>
-            </div>
-          )}
+          <label className="text-xs text-muted-foreground font-medium mb-2 block uppercase tracking-wide">Account</label>
+          <span className="text-foreground font-medium">@{username}</span>
         </div>
 
         {/* Manage Balance */}
         <div className="bg-secondary rounded-2xl p-4 space-y-4">
           <div>
-            <label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Practice Balance</label>
+            <label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Cash Balance</label>
             <p className="text-2xl font-bold text-foreground mt-1">${cashBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
-            <p className="text-xs text-muted-foreground mt-1">Add money to your balance, then use Buy or Swap to get crypto tokens.</p>
+            <p className="text-xs text-muted-foreground mt-1">Add money to your balance, then use Buy to get crypto tokens.</p>
           </div>
 
           <div className="relative">
@@ -149,10 +125,10 @@ const Settings = ({ onClose }: SettingsProps) => {
         </div>
 
         <button
-          onClick={() => { localStorage.clear(); window.location.reload(); }}
-          className="w-full py-3 rounded-xl border border-destructive/50 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors"
+          onClick={logout}
+          className="w-full py-3 rounded-xl border border-destructive/50 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
         >
-          Reset Wallet
+          <LogOut className="w-4 h-4" /> Log Out
         </button>
       </div>
     </div>

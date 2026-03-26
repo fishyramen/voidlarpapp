@@ -11,13 +11,21 @@ export interface Token {
 
 export interface Transaction {
   id: string;
-  type: "send" | "receive" | "swap";
+  type: "send" | "receive" | "swap" | "buy";
   fromToken?: string;
   toToken?: string;
   amount: number;
   value: number;
   timestamp: number;
   address?: string;
+}
+
+interface UserAccount {
+  username: string;
+  password: string;
+  tokens: Token[];
+  cashBalance: number;
+  transactions: Transaction[];
 }
 
 interface WalletState {
@@ -33,19 +41,33 @@ interface WalletState {
   transactions: Transaction[];
   addTransaction: (tx: Omit<Transaction, "id" | "timestamp">) => void;
   swapTokens: (fromSymbol: string, toSymbol: string, fromAmount: number) => void;
+  buyToken: (symbol: string, usdAmount: number) => void;
+  sendToUser: (toUsername: string, symbol: string, amount: number) => { success: boolean; error?: string };
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  logout: () => void;
 }
 
-const defaultTokens: Token[] = [
-  { symbol: "SOL", name: "Solana", balance: 30.41, priceUsd: 135.30, change: 5.61, logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png" },
-  { symbol: "ETH", name: "Ethereum", balance: 0.7932, priceUsd: 3714.50, change: -2.10, logo: "https://assets.coingecko.com/coins/images/279/small/ethereum.png" },
-  { symbol: "BTC", name: "Bitcoin", balance: 0.02093, priceUsd: 101900.00, change: 1.05, logo: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png" },
-  { symbol: "USDC", name: "USD Coin", balance: 1250.00, priceUsd: 1.00, change: 0.01, logo: "https://assets.coingecko.com/coins/images/6319/small/usdc.png" },
-  { symbol: "BONK", name: "Bonk", balance: 24500000, priceUsd: 0.000025, change: -1.23, logo: "https://assets.coingecko.com/coins/images/28600/small/bonk.jpg" },
-  { symbol: "RAY", name: "Raydium", balance: 45.20, priceUsd: 3.60, change: 5.67, logo: "https://assets.coingecko.com/coins/images/13928/small/PSigc4ie_400x400.jpg" },
-  { symbol: "JTO", name: "Jito", balance: 32.00, priceUsd: 3.13, change: -0.45, logo: "https://assets.coingecko.com/coins/images/33228/small/jto.png" },
+export const defaultTokens: Token[] = [
+  { symbol: "SOL", name: "Solana", balance: 0, priceUsd: 135.30, change: 5.61, logo: "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png" },
+  { symbol: "ETH", name: "Ethereum", balance: 0, priceUsd: 3714.50, change: -2.10, logo: "https://assets.coingecko.com/coins/images/279/small/ethereum.png" },
+  { symbol: "BTC", name: "Bitcoin", balance: 0, priceUsd: 101900.00, change: 1.05, logo: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png" },
+  { symbol: "USDC", name: "USD Coin", balance: 0, priceUsd: 1.00, change: 0.01, logo: "https://assets.coingecko.com/coins/images/6319/small/usdc.png" },
+  { symbol: "BONK", name: "Bonk", balance: 0, priceUsd: 0.000025, change: -1.23, logo: "https://assets.coingecko.com/coins/images/28600/small/bonk.jpg" },
+  { symbol: "RAY", name: "Raydium", balance: 0, priceUsd: 3.60, change: 5.67, logo: "https://assets.coingecko.com/coins/images/13928/small/PSigc4ie_400x400.jpg" },
+  { symbol: "JTO", name: "Jito", balance: 0, priceUsd: 3.13, change: -0.45, logo: "https://assets.coingecko.com/coins/images/33228/small/jto.png" },
 ];
+
+function getAccounts(): Record<string, UserAccount> {
+  const raw = localStorage.getItem("phantom_accounts");
+  return raw ? JSON.parse(raw) : {};
+}
+
+function saveAccount(account: UserAccount) {
+  const accounts = getAccounts();
+  accounts[account.username.toLowerCase()] = account;
+  localStorage.setItem("phantom_accounts", JSON.stringify(accounts));
+}
 
 const WalletContext = createContext<WalletState | null>(null);
 
@@ -55,36 +77,68 @@ export const useWallet = () => {
   return ctx;
 };
 
+export const signUp = (username: string, password: string): { success: boolean; error?: string } => {
+  const accounts = getAccounts();
+  const key = username.toLowerCase();
+  if (accounts[key]) return { success: false, error: "Username already taken" };
+  const account: UserAccount = {
+    username,
+    password,
+    tokens: defaultTokens.map(t => ({ ...t })),
+    cashBalance: 0,
+    transactions: [],
+  };
+  saveAccount(account);
+  return { success: true };
+};
+
+export const signIn = (username: string, password: string): { success: boolean; error?: string } => {
+  const accounts = getAccounts();
+  const account = accounts[username.toLowerCase()];
+  if (!account) return { success: false, error: "User not found" };
+  if (account.password !== password) return { success: false, error: "Incorrect password" };
+  return { success: true };
+};
+
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
-  const [username, setUsernameState] = useState(() => localStorage.getItem("phantom_username") || "");
-  const [hasOnboarded, setHasOnboardedState] = useState(() => localStorage.getItem("phantom_onboarded") === "true");
+  const [username, setUsernameState] = useState(() => localStorage.getItem("phantom_current_user") || "");
+  const [hasOnboarded, setHasOnboardedState] = useState(() => !!localStorage.getItem("phantom_current_user"));
   const [activeTab, setActiveTab] = useState("wallet");
-  const [cashBalance, setCashBalance] = useState(() => {
-    const saved = localStorage.getItem("phantom_cash");
-    return saved ? parseFloat(saved) : 0;
-  });
-  const [tokens, setTokens] = useState<Token[]>(() => {
-    const saved = localStorage.getItem("phantom_tokens");
-    return saved ? JSON.parse(saved) : defaultTokens;
-  });
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem("phantom_transactions");
-    return saved ? JSON.parse(saved) : [];
-  });
+
+  const loadAccount = (): UserAccount | null => {
+    if (!username) return null;
+    const accounts = getAccounts();
+    return accounts[username.toLowerCase()] || null;
+  };
+
+  const [cashBalance, setCashBalance] = useState(() => loadAccount()?.cashBalance || 0);
+  const [tokens, setTokens] = useState<Token[]>(() => loadAccount()?.tokens || defaultTokens.map(t => ({ ...t })));
+  const [transactions, setTransactions] = useState<Transaction[]>(() => loadAccount()?.transactions || []);
 
   const setUsername = (name: string) => {
     setUsernameState(name);
-    localStorage.setItem("phantom_username", name);
+    localStorage.setItem("phantom_current_user", name);
   };
 
   const setHasOnboarded = (v: boolean) => {
     setHasOnboardedState(v);
-    localStorage.setItem("phantom_onboarded", String(v));
+    if (!v) {
+      localStorage.removeItem("phantom_current_user");
+    }
   };
 
-  useEffect(() => { localStorage.setItem("phantom_tokens", JSON.stringify(tokens)); }, [tokens]);
-  useEffect(() => { localStorage.setItem("phantom_transactions", JSON.stringify(transactions)); }, [transactions]);
-  useEffect(() => { localStorage.setItem("phantom_cash", String(cashBalance)); }, [cashBalance]);
+  // Persist to accounts on change
+  useEffect(() => {
+    if (!username) return;
+    const accounts = getAccounts();
+    const account = accounts[username.toLowerCase()];
+    if (account) {
+      account.tokens = tokens;
+      account.cashBalance = cashBalance;
+      account.transactions = transactions;
+      saveAccount(account);
+    }
+  }, [tokens, cashBalance, transactions, username]);
 
   const totalBalance = tokens.reduce((sum, t) => sum + t.balance * t.priceUsd, 0) + cashBalance;
 
@@ -113,11 +167,87 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     addTransaction({ type: "swap", fromToken: fromSymbol, toToken: toSymbol, amount: fromAmount, value: usdValue });
   };
 
+  const buyToken = (symbol: string, usdAmount: number) => {
+    if (usdAmount <= 0 || usdAmount > cashBalance) return;
+    const token = tokens.find(t => t.symbol === symbol);
+    if (!token) return;
+
+    const tokenAmount = usdAmount / token.priceUsd;
+    setCashBalance(prev => prev - usdAmount);
+    setTokens(prev => prev.map(t =>
+      t.symbol === symbol ? { ...t, balance: t.balance + tokenAmount } : t
+    ));
+    addTransaction({ type: "buy", toToken: symbol, amount: tokenAmount, value: usdAmount });
+  };
+
+  const sendToUser = (toUsername: string, symbol: string, amount: number): { success: boolean; error?: string } => {
+    const accounts = getAccounts();
+    const recipient = accounts[toUsername.toLowerCase()];
+    if (!recipient) return { success: false, error: "User not found" };
+    if (toUsername.toLowerCase() === username.toLowerCase()) return { success: false, error: "Cannot send to yourself" };
+
+    if (symbol === "CASH") {
+      if (amount > cashBalance) return { success: false, error: "Insufficient balance" };
+      setCashBalance(prev => prev - amount);
+      recipient.cashBalance = (recipient.cashBalance || 0) + amount;
+      recipient.transactions = [{
+        id: Math.random().toString(36).slice(2),
+        timestamp: Date.now(),
+        type: "receive",
+        toToken: "CASH",
+        amount,
+        value: amount,
+        address: username,
+      }, ...recipient.transactions];
+      saveAccount(recipient);
+      addTransaction({ type: "send", fromToken: "CASH", amount, value: amount, address: toUsername });
+      return { success: true };
+    }
+
+    const senderToken = tokens.find(t => t.symbol === symbol);
+    if (!senderToken || senderToken.balance < amount) return { success: false, error: "Insufficient balance" };
+
+    const usdValue = amount * senderToken.priceUsd;
+    setTokens(prev => prev.map(t =>
+      t.symbol === symbol ? { ...t, balance: t.balance - amount } : t
+    ));
+
+    // Add to recipient
+    const recipientToken = recipient.tokens.find((t: Token) => t.symbol === symbol);
+    if (recipientToken) {
+      recipientToken.balance += amount;
+    }
+    recipient.transactions = [{
+      id: Math.random().toString(36).slice(2),
+      timestamp: Date.now(),
+      type: "receive",
+      toToken: symbol,
+      amount,
+      value: usdValue,
+      address: username,
+    }, ...recipient.transactions];
+    saveAccount(recipient);
+
+    addTransaction({ type: "send", fromToken: symbol, amount, value: usdValue, address: toUsername });
+    return { success: true };
+  };
+
+  const logout = () => {
+    setHasOnboarded(false);
+    setUsernameState("");
+    setTokens(defaultTokens.map(t => ({ ...t })));
+    setCashBalance(0);
+    setTransactions([]);
+    setActiveTab("wallet");
+    localStorage.removeItem("phantom_current_user");
+  };
+
   return (
     <WalletContext.Provider value={{
       username, setUsername, hasOnboarded, setHasOnboarded,
       tokens, setTokens, totalBalance, cashBalance, setCashBalance,
-      transactions, addTransaction, swapTokens, activeTab, setActiveTab,
+      transactions, addTransaction, swapTokens, buyToken, sendToUser,
+      activeTab, setActiveTab, logout,
     }}>
       {children}
     </WalletContext.Provider>

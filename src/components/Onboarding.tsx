@@ -1,18 +1,42 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@/context/WalletContext";
+import { signUp, signIn } from "@/context/WalletContext";
 import phantomLogo from "@/assets/phantom-logo.png";
+import { Eye, EyeOff } from "lucide-react";
 
 const Onboarding = () => {
   const { setUsername, setHasOnboarded } = useWallet();
+  const [step, setStep] = useState(0); // 0=welcome, 1=signup, 2=login
   const [name, setName] = useState("");
-  const [step, setStep] = useState(0);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleCreate = () => {
-    if (name.trim()) {
-      setUsername(name.trim());
-      setHasOnboarded(true);
-    }
+  const handleSignUp = () => {
+    if (!name.trim() || !password) { setError("Fill in all fields"); return; }
+    if (password.length < 4) { setError("Password must be at least 4 characters"); return; }
+    const result = signUp(name.trim(), password);
+    if (!result.success) { setError(result.error || "Error"); return; }
+    setUsername(name.trim());
+    setHasOnboarded(true);
+  };
+
+  const handleLogin = () => {
+    if (!name.trim() || !password) { setError("Fill in all fields"); return; }
+    const result = signIn(name.trim(), password);
+    if (!result.success) { setError(result.error || "Error"); return; }
+    // Load account data
+    setUsername(name.trim());
+    setHasOnboarded(true);
+    window.location.reload();
+  };
+
+  const switchMode = (newStep: number) => {
+    setStep(newStep);
+    setError("");
+    setName("");
+    setPassword("");
   };
 
   return (
@@ -27,8 +51,7 @@ const Onboarding = () => {
               exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col"
             >
-              {/* Purple top area like real Phantom */}
-              <div className="flex-1 flex flex-col items-center justify-center px-8 bg-[hsl(263,67%,58%)] rounded-b-[2rem]">
+              <div className="flex-1 flex flex-col items-center justify-center px-8 phantom-gradient rounded-b-[2rem]">
                 <motion.img
                   src={phantomLogo}
                   alt="Phantom"
@@ -42,13 +65,13 @@ const Onboarding = () => {
               </div>
               <div className="p-6 space-y-3">
                 <button
-                  onClick={() => setStep(1)}
+                  onClick={() => switchMode(1)}
                   className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
                 >
                   Create a new wallet
                 </button>
                 <button
-                  onClick={() => setStep(1)}
+                  onClick={() => switchMode(2)}
                   className="w-full py-3.5 rounded-xl bg-secondary text-foreground font-semibold text-sm"
                 >
                   I already have a wallet
@@ -57,44 +80,78 @@ const Onboarding = () => {
             </motion.div>
           )}
 
-          {step === 1 && (
+          {(step === 1 || step === 2) && (
             <motion.div
-              key="username"
+              key="form"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col p-6"
             >
               <button
-                onClick={() => setStep(0)}
+                onClick={() => switchMode(0)}
                 className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-8"
               >
                 ←
               </button>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Create your account</h2>
-              <p className="text-muted-foreground text-sm mb-8">Choose a username for your wallet</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                {step === 1 ? "Create your wallet" : "Welcome back"}
+              </h2>
+              <p className="text-muted-foreground text-sm mb-8">
+                {step === 1 ? "Choose a username and password" : "Log in to your wallet"}
+              </p>
+
+              {error && (
+                <div className="bg-destructive/15 text-destructive text-xs font-medium px-3 py-2 rounded-lg mb-4">
+                  {error}
+                </div>
+              )}
 
               <label className="text-xs font-medium text-muted-foreground mb-2 block">USERNAME</label>
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                onChange={(e) => { setName(e.target.value); setError(""); }}
                 placeholder="@username"
                 maxLength={20}
                 autoFocus
-                className="w-full py-3.5 px-4 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary"
+                className="w-full py-3.5 px-4 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary mb-4"
               />
-              <p className="text-xs text-muted-foreground mt-2">This is how others will find you on Phantom</p>
+
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">PASSWORD</label>
+              <div className="relative mb-2">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && (step === 1 ? handleSignUp() : handleLogin())}
+                  placeholder="••••••••"
+                  className="w-full py-3.5 px-4 pr-12 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
 
               <div className="flex-1" />
 
               <button
-                onClick={handleCreate}
-                disabled={!name.trim()}
+                onClick={step === 1 ? handleSignUp : handleLogin}
+                disabled={!name.trim() || !password}
                 className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-30 transition-opacity"
               >
-                Continue
+                {step === 1 ? "Create Wallet" : "Log In"}
+              </button>
+
+              <button
+                onClick={() => switchMode(step === 1 ? 2 : 1)}
+                className="w-full py-2 text-xs text-muted-foreground mt-3 hover:text-foreground transition-colors"
+              >
+                {step === 1 ? "Already have a wallet? Log in" : "Don't have a wallet? Create one"}
               </button>
             </motion.div>
           )}
