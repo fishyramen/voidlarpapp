@@ -118,6 +118,14 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const setUsername = (name: string) => {
     setUsernameState(name);
     localStorage.setItem("phantom_current_user", name);
+    // Reload account data
+    const accounts = getAccounts();
+    const account = accounts[name.toLowerCase()];
+    if (account) {
+      setTokens(account.tokens);
+      setCashBalance(account.cashBalance);
+      setTransactions(account.transactions);
+    }
   };
 
   const setHasOnboarded = (v: boolean) => {
