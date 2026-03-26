@@ -26,10 +26,8 @@ const Onboarding = () => {
     if (!name.trim() || !password) { setError("Fill in all fields"); return; }
     const result = signIn(name.trim(), password);
     if (!result.success) { setError(result.error || "Error"); return; }
-    // Load account data
     setUsername(name.trim());
     setHasOnboarded(true);
-    window.location.reload();
   };
 
   const switchMode = (newStep: number) => {
