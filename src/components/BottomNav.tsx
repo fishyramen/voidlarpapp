@@ -1,23 +1,28 @@
-import { Wallet, BarChart3, Globe, MessageSquare } from "lucide-react";
-
-const navItems = [
-  { icon: Wallet, label: "Wallet", active: true },
-  { icon: BarChart3, label: "Activity", active: false },
-  { icon: Globe, label: "Browse", active: false },
-  { icon: MessageSquare, label: "Messages", active: false },
-];
+import { Home, Grid2x2, ArrowLeftRight, Clock, Compass } from "lucide-react";
+import { useWallet } from "@/context/WalletContext";
 
 const BottomNav = () => {
+  const { activeTab, setActiveTab } = useWallet();
+
+  const navItems = [
+    { icon: Home, label: "Home", id: "wallet" },
+    { icon: Grid2x2, label: "Apps", id: "apps" },
+    { icon: ArrowLeftRight, label: "Swap", id: "swap" },
+    { icon: Clock, label: "Activity", id: "activity" },
+    { icon: Compass, label: "Explore", id: "explore" },
+  ];
+
   return (
-    <div className="flex items-center justify-around py-3 px-4 border-t border-border bg-background/80 backdrop-blur-xl">
+    <div className="flex items-center justify-around py-2 px-2 border-t border-border">
       {navItems.map((item) => (
         <button
-          key={item.label}
-          className={`flex flex-col items-center gap-0.5 transition-colors ${
-            item.active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+          key={item.id}
+          onClick={() => setActiveTab(item.id)}
+          className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors ${
+            activeTab === item.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          <item.icon className="w-5 h-5" />
+          <item.icon className="w-5 h-5" strokeWidth={activeTab === item.id ? 2.5 : 2} />
           <span className="text-[10px] font-medium">{item.label}</span>
         </button>
       ))}

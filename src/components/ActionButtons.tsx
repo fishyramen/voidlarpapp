@@ -1,29 +1,30 @@
-import { ArrowUpRight, ArrowDownLeft, ArrowLeftRight, Plus } from "lucide-react";
-import { motion } from "framer-motion";
+import { QrCode, Send, ArrowLeftRight, DollarSign, MoreHorizontal } from "lucide-react";
+import { useWallet } from "@/context/WalletContext";
 
 const actions = [
-  { icon: ArrowUpRight, label: "Send" },
-  { icon: ArrowDownLeft, label: "Receive" },
-  { icon: ArrowLeftRight, label: "Swap" },
-  { icon: Plus, label: "Buy" },
+  { icon: QrCode, label: "Receive", tab: "" },
+  { icon: Send, label: "Send", tab: "" },
+  { icon: ArrowLeftRight, label: "Swap", tab: "swap" },
+  { icon: DollarSign, label: "Buy", tab: "" },
+  { icon: MoreHorizontal, label: "More", tab: "" },
 ];
 
 const ActionButtons = () => {
+  const { setActiveTab } = useWallet();
+
   return (
-    <div className="flex justify-center gap-5 px-5 pb-4">
-      {actions.map((action, i) => (
-        <motion.button
+    <div className="flex justify-center gap-4 px-4 pb-4">
+      {actions.map((action) => (
+        <button
           key={action.label}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: i * 0.05 }}
+          onClick={() => action.tab && setActiveTab(action.tab)}
           className="flex flex-col items-center gap-1.5"
         >
-          <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-primary hover:phantom-gradient hover:text-primary-foreground transition-all duration-200">
+          <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center text-foreground hover:bg-muted transition-colors">
             <action.icon className="w-5 h-5" />
           </div>
-          <span className="text-xs text-muted-foreground font-medium">{action.label}</span>
-        </motion.button>
+          <span className="text-[11px] text-muted-foreground font-medium">{action.label}</span>
+        </button>
       ))}
     </div>
   );
