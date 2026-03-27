@@ -10,7 +10,6 @@ import ActivityScreen from "@/components/ActivityScreen";
 import SendScreen from "@/components/SendScreen";
 import ReceiveScreen from "@/components/ReceiveScreen";
 import BuyScreen from "@/components/BuyScreen";
-import ExploreScreen from "@/components/ExploreScreen";
 import Onboarding from "@/components/Onboarding";
 import { useWallet } from "@/context/WalletContext";
 
@@ -58,14 +57,6 @@ const Index = () => {
         return (
           <>
             <BuyScreen />
-            <BottomNav />
-          </>
-        );
-      case "explore":
-        return (
-          <>
-            <WalletHeader onOpenSettings={() => setShowSettings(true)} />
-            <ExploreScreen />
             <BottomNav />
           </>
         );
