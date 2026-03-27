@@ -57,7 +57,7 @@ const Index = () => {
       case "buy":
         return (
           <>
-            <BuyScreen />
+            <BuyScreen initialSymbol={exploreBuySymbol || undefined} />
             <BottomNav />
           </>
         );

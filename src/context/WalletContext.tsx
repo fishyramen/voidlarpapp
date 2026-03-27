@@ -269,8 +269,8 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     <WalletContext.Provider value={{
       username, setUsername, hasOnboarded, setHasOnboarded,
       tokens, setTokens, totalBalance, cashBalance, setCashBalance,
-      transactions, addTransaction, swapTokens, buyToken, sendToUser,
-      activeTab, setActiveTab, logout,
+      transactions, addTransaction, swapTokens, buyToken, sellToken, sendToUser,
+      activeTab, setActiveTab, exploreBuySymbol, setExploreBuySymbol, logout,
     }}>
       {children}
     </WalletContext.Provider>
