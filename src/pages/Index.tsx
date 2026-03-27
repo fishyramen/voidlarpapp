@@ -61,6 +61,14 @@ const Index = () => {
             <BottomNav />
           </>
         );
+      case "explore":
+        return (
+          <>
+            <WalletHeader onOpenSettings={() => setShowSettings(true)} />
+            <ExploreScreen />
+            <BottomNav />
+          </>
+        );
       default:
         return (
           <>
