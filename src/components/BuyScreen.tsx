@@ -9,7 +9,7 @@ interface BuyScreenProps {
 }
 
 const BuyScreen = ({ initialSymbol, mode: initialMode }: BuyScreenProps) => {
-  const { tokens, cashBalance, buyToken, sellToken, setActiveTab } = useWallet();
+  const { tokens, cashBalance, buyToken, sellToken, setActiveTab, setExploreBuySymbol } = useWallet();
   const [mode, setMode] = useState<"buy" | "sell">(initialMode || "buy");
   const [selectedSymbol, setSelectedSymbol] = useState(initialSymbol || "");
   const [usdAmount, setUsdAmount] = useState("");
