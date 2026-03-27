@@ -42,9 +42,12 @@ interface WalletState {
   addTransaction: (tx: Omit<Transaction, "id" | "timestamp">) => void;
   swapTokens: (fromSymbol: string, toSymbol: string, fromAmount: number) => void;
   buyToken: (symbol: string, usdAmount: number) => void;
+  sellToken: (symbol: string, tokenAmount: number) => void;
   sendToUser: (toUsername: string, symbol: string, amount: number) => { success: boolean; error?: string };
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  exploreBuySymbol: string;
+  setExploreBuySymbol: (s: string) => void;
   logout: () => void;
 }
 
@@ -104,6 +107,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState(() => localStorage.getItem("phantom_current_user") || "");
   const [hasOnboarded, setHasOnboardedState] = useState(() => !!localStorage.getItem("phantom_current_user"));
   const [activeTab, setActiveTab] = useState("wallet");
+  const [exploreBuySymbol, setExploreBuySymbol] = useState("");
 
   const loadAccount = (): UserAccount | null => {
     if (!username) return null;
@@ -188,6 +192,17 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     addTransaction({ type: "buy", toToken: symbol, amount: tokenAmount, value: usdAmount });
   };
 
+  const sellToken = (symbol: string, tokenAmount: number) => {
+    const token = tokens.find(t => t.symbol === symbol);
+    if (!token || token.balance < tokenAmount) return;
+    const usdValue = tokenAmount * token.priceUsd;
+    setTokens(prev => prev.map(t =>
+      t.symbol === symbol ? { ...t, balance: t.balance - tokenAmount } : t
+    ));
+    setCashBalance(prev => prev + usdValue);
+    addTransaction({ type: "swap", fromToken: symbol, toToken: "CASH", amount: tokenAmount, value: usdValue });
+  };
+
   const sendToUser = (toUsername: string, symbol: string, amount: number): { success: boolean; error?: string } => {
     const accounts = getAccounts();
     const recipient = accounts[toUsername.toLowerCase()];
@@ -254,8 +269,8 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     <WalletContext.Provider value={{
       username, setUsername, hasOnboarded, setHasOnboarded,
       tokens, setTokens, totalBalance, cashBalance, setCashBalance,
-      transactions, addTransaction, swapTokens, buyToken, sendToUser,
-      activeTab, setActiveTab, logout,
+      transactions, addTransaction, swapTokens, buyToken, sellToken, sendToUser,
+      activeTab, setActiveTab, exploreBuySymbol, setExploreBuySymbol, logout,
     }}>
       {children}
     </WalletContext.Provider>

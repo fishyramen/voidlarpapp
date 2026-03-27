@@ -1,26 +1,55 @@
 import { useState } from "react";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
+import { allCoins } from "@/data/coins";
 
-const BuyScreen = () => {
-  const { tokens, cashBalance, buyToken, setActiveTab } = useWallet();
-  const [selectedToken, setSelectedToken] = useState("SOL");
+interface BuyScreenProps {
+  initialSymbol?: string;
+  mode?: "buy" | "sell";
+}
+
+const BuyScreen = ({ initialSymbol, mode: initialMode }: BuyScreenProps) => {
+  const { tokens, cashBalance, buyToken, sellToken, setActiveTab, setExploreBuySymbol } = useWallet();
+  const [mode, setMode] = useState<"buy" | "sell">(initialMode || "buy");
+  const [selectedSymbol, setSelectedSymbol] = useState(initialSymbol || "");
   const [usdAmount, setUsdAmount] = useState("");
-  const [showTokenSelect, setShowTokenSelect] = useState(false);
+  const [search, setSearch] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const token = tokens.find(t => t.symbol === selectedToken)!;
+  const selectedCoin = allCoins.find(c => c.symbol === selectedSymbol);
+  const walletToken = tokens.find(t => t.symbol === selectedSymbol);
   const amount = parseFloat(usdAmount) || 0;
-  const tokenAmount = token ? amount / token.priceUsd : 0;
+  const tokenAmount = selectedCoin ? amount / selectedCoin.price : 0;
 
-  const handleBuy = () => {
-    if (amount <= 0 || amount > cashBalance) return;
-    buyToken(selectedToken, amount);
+  const filteredCoins = allCoins.filter(
+    c => c.name.toLowerCase().includes(search.toLowerCase()) ||
+         c.symbol.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const canExecute = () => {
+    if (amount <= 0) return false;
+    if (mode === "buy") return amount <= cashBalance;
+    if (mode === "sell") return walletToken ? tokenAmount <= walletToken.balance : false;
+    return false;
+  };
+
+  const handleExecute = () => {
+    if (!canExecute() || !selectedCoin) return;
+    if (mode === "buy") {
+      buyToken(selectedSymbol, amount);
+    } else {
+      sellToken(selectedSymbol, tokenAmount);
+    }
     setSuccess(true);
     setTimeout(() => { setActiveTab("wallet"); setSuccess(false); }, 1500);
   };
 
   const presets = [10, 50, 100, 500];
+
+  const formatPrice = (p: number) => {
+    if (p >= 1) return "$" + p.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    return "$" + p.toFixed(6);
+  };
 
   if (success) {
     return (
@@ -28,72 +57,133 @@ const BuyScreen = () => {
         <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mb-4">
           <span className="text-success text-2xl">✓</span>
         </div>
-        <p className="text-foreground font-semibold text-lg">Purchased!</p>
-        <p className="text-muted-foreground text-sm mt-1">{tokenAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedToken}</p>
+        <p className="text-foreground font-semibold text-lg">{mode === "buy" ? "Purchased!" : "Sold!"}</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          {tokenAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedSymbol}
+        </p>
       </div>
     );
   }
 
+  // Token selection screen
+  if (!selectedSymbol) {
+    return (
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex items-center gap-3 px-4 pt-3 pb-2">
+          <button onClick={() => { setExploreBuySymbol(""); setActiveTab("wallet"); }} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <h2 className="text-base font-semibold text-foreground">Select Token</h2>
+        </div>
+
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2 bg-secondary rounded-xl px-3 py-2.5">
+            <Search className="w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search tokens..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoFocus
+              className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none flex-1"
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-3">
+          {filteredCoins.map(coin => (
+            <button
+              key={coin.symbol}
+              onClick={() => setSelectedSymbol(coin.symbol)}
+              className="w-full flex items-center justify-between py-3 px-2 rounded-xl hover:bg-secondary/60 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-secondary flex items-center justify-center">
+                  <img src={coin.logo} alt={coin.name} className="w-full h-full object-cover"
+                    onError={(e) => { const el = e.target as HTMLImageElement; el.style.display = "none"; el.parentElement!.innerHTML = `<span class="text-xs font-bold text-foreground">${coin.symbol.charAt(0)}</span>`; }}
+                  />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-foreground">{coin.name}</p>
+                  <p className="text-xs text-muted-foreground">{coin.symbol}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium text-foreground">{formatPrice(coin.price)}</p>
+                <p className={`text-xs font-medium ${coin.change >= 0 ? "text-success" : "text-destructive"}`}>
+                  {coin.change >= 0 ? "+" : ""}{coin.change.toFixed(2)}%
+                </p>
+              </div>
+            </button>
+          ))}
+          {filteredCoins.length === 0 && (
+            <div className="flex items-center justify-center py-12">
+              <p className="text-sm text-muted-foreground">No tokens found</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Amount entry screen
   return (
     <div className="flex-1 flex flex-col relative">
       <div className="flex items-center gap-3 px-4 pt-3 pb-2">
-        <button onClick={() => setActiveTab("wallet")} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
+        <button onClick={() => setSelectedSymbol("")} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <h2 className="text-base font-semibold text-foreground">Buy</h2>
+        <h2 className="text-base font-semibold text-foreground">{mode === "buy" ? "Buy" : "Sell"} {selectedSymbol}</h2>
       </div>
 
       <div className="flex-1 px-4 space-y-4 pt-2">
-        <div className="bg-secondary rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-muted-foreground">Cash Balance</span>
-          </div>
-          <p className="text-2xl font-bold text-foreground">${cashBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
-          {cashBalance === 0 && (
-            <p className="text-xs text-warning mt-1">Add funds in Settings first</p>
-          )}
-        </div>
-
-        <div>
-          <label className="text-xs text-muted-foreground font-medium mb-2 block uppercase tracking-wide">Token</label>
+        {/* Mode toggle */}
+        <div className="flex bg-secondary rounded-xl p-1">
           <button
-            onClick={() => setShowTokenSelect(!showTokenSelect)}
-            className="w-full flex items-center justify-between py-3 px-4 rounded-xl bg-secondary"
+            onClick={() => setMode("buy")}
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${mode === "buy" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
           >
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full overflow-hidden bg-muted">
-                <img src={token?.logo} alt="" className="w-full h-full object-cover" />
-              </div>
-              <div className="text-left">
-                <span className="text-sm font-medium text-foreground">{token?.name}</span>
-                <p className="text-xs text-muted-foreground">${token?.priceUsd.toLocaleString()}</p>
-              </div>
-            </div>
-            <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            Buy
           </button>
-          {showTokenSelect && (
-            <div className="mt-1 bg-secondary rounded-xl overflow-hidden max-h-48 overflow-y-auto">
-              {tokens.map(t => (
-                <button
-                  key={t.symbol}
-                  onClick={() => { setSelectedToken(t.symbol); setShowTokenSelect(false); }}
-                  className="w-full flex items-center justify-between py-2.5 px-4 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full overflow-hidden bg-muted">
-                      <img src={t.logo} alt="" className="w-full h-full object-cover" />
-                    </div>
-                    <span className="text-sm text-foreground">{t.name}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">${t.priceUsd.toLocaleString()}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          <button
+            onClick={() => setMode("sell")}
+            className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${mode === "sell" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+          >
+            Sell
+          </button>
         </div>
 
+        {/* Selected token info */}
+        <div className="flex items-center gap-3 bg-secondary rounded-2xl p-4">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+            <img src={selectedCoin?.logo} alt="" className="w-full h-full object-cover"
+              onError={(e) => { const el = e.target as HTMLImageElement; el.style.display = "none"; }}
+            />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">{selectedCoin?.name}</p>
+            <p className="text-xs text-muted-foreground">{formatPrice(selectedCoin?.price || 0)}</p>
+          </div>
+          <div className="text-right">
+            {mode === "buy" ? (
+              <div>
+                <p className="text-xs text-muted-foreground">Cash</p>
+                <p className="text-sm font-semibold text-foreground">${cashBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs text-muted-foreground">Holdings</p>
+                <p className="text-sm font-semibold text-foreground">{(walletToken?.balance || 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Amount input */}
         <div>
-          <label className="text-xs text-muted-foreground font-medium mb-2 block uppercase tracking-wide">Amount (USD)</label>
+          <label className="text-xs text-muted-foreground font-medium mb-2 block uppercase tracking-wide">
+            Amount (USD)
+          </label>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">$</span>
             <input
@@ -115,9 +205,9 @@ const BuyScreen = () => {
               </button>
             ))}
           </div>
-          {amount > 0 && token && (
+          {amount > 0 && selectedCoin && (
             <p className="text-xs text-muted-foreground mt-2">
-              ≈ {tokenAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedToken}
+              ≈ {tokenAmount.toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedSymbol}
             </p>
           )}
         </div>
@@ -125,11 +215,14 @@ const BuyScreen = () => {
 
       <div className="px-4 pb-4">
         <button
-          onClick={handleBuy}
-          disabled={amount <= 0 || amount > cashBalance}
+          onClick={handleExecute}
+          disabled={!canExecute()}
           className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-30 transition-opacity"
         >
-          {amount > cashBalance ? "Insufficient funds" : "Buy"}
+          {mode === "buy"
+            ? (amount > cashBalance ? "Insufficient funds" : `Buy ${selectedSymbol}`)
+            : (walletToken && tokenAmount > walletToken.balance ? "Insufficient balance" : `Sell ${selectedSymbol}`)
+          }
         </button>
       </div>
     </div>

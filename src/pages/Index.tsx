@@ -15,7 +15,7 @@ import Onboarding from "@/components/Onboarding";
 import { useWallet } from "@/context/WalletContext";
 
 const Index = () => {
-  const { hasOnboarded, activeTab, setActiveTab } = useWallet();
+  const { hasOnboarded, activeTab, setActiveTab, exploreBuySymbol, setExploreBuySymbol } = useWallet();
   const [showSettings, setShowSettings] = useState(false);
 
   if (!hasOnboarded) return <Onboarding />;
@@ -57,7 +57,7 @@ const Index = () => {
       case "buy":
         return (
           <>
-            <BuyScreen />
+            <BuyScreen initialSymbol={exploreBuySymbol || undefined} />
             <BottomNav />
           </>
         );

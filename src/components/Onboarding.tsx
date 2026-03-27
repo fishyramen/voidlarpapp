@@ -7,7 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 
 const Onboarding = () => {
   const { setUsername, setHasOnboarded } = useWallet();
-  const [step, setStep] = useState(0); // 0=welcome, 1=signup, 2=login
+  const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +39,7 @@ const Onboarding = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-[400px] h-[780px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
+      <div className="w-full max-w-[400px] h-[780px] bg-[hsl(240,6%,12%)] rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
         <AnimatePresence mode="wait">
           {step === 0 && (
             <motion.div
@@ -49,17 +49,28 @@ const Onboarding = () => {
               exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col"
             >
-              <div className="flex-1 flex flex-col items-center justify-center px-8 phantom-gradient rounded-b-[2rem]">
-                <motion.img
-                  src={phantomLogo}
-                  alt="Phantom"
-                  className="w-20 h-20 rounded-2xl mb-4"
+              <div className="flex-1 flex flex-col items-center justify-center px-8">
+                <motion.div
+                  className="flex items-center gap-3 mb-6"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.2, type: "spring" }}
-                />
-                <h1 className="text-2xl font-bold text-primary-foreground mb-1">Phantom</h1>
-                <p className="text-primary-foreground/70 text-sm">A crypto wallet reimagined</p>
+                >
+                  <img
+                    src={phantomLogo}
+                    alt="Phantom"
+                    className="w-14 h-14 rounded-2xl"
+                  />
+                  <h1 className="text-3xl font-bold text-foreground tracking-tight">phantom</h1>
+                </motion.div>
+                <motion.p
+                  className="text-muted-foreground text-sm text-center leading-relaxed max-w-[260px]"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  To get started, create a new wallet or import an existing one.
+                </motion.p>
               </div>
               <div className="p-6 space-y-3">
                 <button
