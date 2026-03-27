@@ -107,6 +107,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsernameState] = useState(() => localStorage.getItem("phantom_current_user") || "");
   const [hasOnboarded, setHasOnboardedState] = useState(() => !!localStorage.getItem("phantom_current_user"));
   const [activeTab, setActiveTab] = useState("wallet");
+  const [exploreBuySymbol, setExploreBuySymbol] = useState("");
 
   const loadAccount = (): UserAccount | null => {
     if (!username) return null;
