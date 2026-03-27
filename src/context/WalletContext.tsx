@@ -42,9 +42,12 @@ interface WalletState {
   addTransaction: (tx: Omit<Transaction, "id" | "timestamp">) => void;
   swapTokens: (fromSymbol: string, toSymbol: string, fromAmount: number) => void;
   buyToken: (symbol: string, usdAmount: number) => void;
+  sellToken: (symbol: string, tokenAmount: number) => void;
   sendToUser: (toUsername: string, symbol: string, amount: number) => { success: boolean; error?: string };
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  exploreBuySymbol: string;
+  setExploreBuySymbol: (s: string) => void;
   logout: () => void;
 }
 
