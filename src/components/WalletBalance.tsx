@@ -2,22 +2,22 @@ import { useWallet } from "@/context/WalletContext";
 
 const WalletBalance = () => {
   const { totalBalance } = useWallet();
-  const changePercent = -1.30;
-  const change = totalBalance * (changePercent / 100);
 
   return (
-    <div className="flex flex-col px-4 pt-3 pb-4">
-      <h1 className="text-[38px] font-bold tracking-tight text-foreground leading-none">
-        ${totalBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-      </h1>
-      <div className="flex items-center gap-2 mt-1">
-        <span className="text-destructive text-sm font-medium">
-          -${Math.abs(change).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-        </span>
-        <span className="text-destructive text-[11px] font-semibold bg-destructive/15 px-1.5 py-0.5 rounded">
-          {changePercent}%
-        </span>
+    <div className="flex flex-col items-center px-4 pt-2 pb-2">
+      {/* Hero illustration placeholder */}
+      <div className="w-full flex items-center justify-center py-4 mb-2">
+        <div className="relative">
+          <div className="w-32 h-24 rounded-2xl bg-secondary/60 flex items-center justify-center">
+            <span className="text-4xl">👻</span>
+          </div>
+        </div>
       </div>
+
+      <h2 className="text-xl font-bold text-foreground mb-1">Your wallet is ready</h2>
+      <p className="text-sm text-muted-foreground text-center leading-relaxed mb-3 px-4">
+        Fund your wallet with cash or crypto and you'll be set to start trading!
+      </p>
     </div>
   );
 };
