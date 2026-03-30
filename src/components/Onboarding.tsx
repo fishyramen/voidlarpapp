@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@/context/WalletContext";
 import { signUp, signIn } from "@/context/WalletContext";
 import phantomLogo from "@/assets/phantom-logo.png";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 const Onboarding = () => {
   const { setUsername, setHasOnboarded } = useWallet();
@@ -39,7 +39,9 @@ const Onboarding = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-[400px] h-[780px] bg-[hsl(240,6%,12%)] rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
+      <div className="w-full max-w-[400px] h-[780px] rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative"
+        style={{ background: "linear-gradient(180deg, hsl(263, 50%, 18%) 0%, hsl(240, 10%, 6%) 50%)" }}
+      >
         <AnimatePresence mode="wait">
           {step === 0 && (
             <motion.div
@@ -50,42 +52,50 @@ const Onboarding = () => {
               className="flex-1 flex flex-col"
             >
               <div className="flex-1 flex flex-col items-center justify-center px-8">
-                <motion.div
-                  className="flex items-center gap-3 mb-6"
-                  initial={{ scale: 0.8, opacity: 0 }}
+                <motion.img
+                  src={phantomLogo}
+                  alt="Phantom"
+                  className="w-24 h-24 rounded-3xl mb-8"
+                  initial={{ scale: 0.5, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.2, type: "spring" }}
+                  transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                />
+                <motion.h1
+                  className="text-3xl font-bold text-foreground tracking-tight mb-2"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <img
-                    src={phantomLogo}
-                    alt="Phantom"
-                    className="w-14 h-14 rounded-2xl"
-                  />
-                  <h1 className="text-3xl font-bold text-foreground tracking-tight">phantom</h1>
-                </motion.div>
+                  Phantom
+                </motion.h1>
                 <motion.p
                   className="text-muted-foreground text-sm text-center leading-relaxed max-w-[260px]"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.45 }}
                 >
-                  To get started, create a new wallet or import an existing one.
+                  A friendly crypto wallet built for DeFi & NFTs
                 </motion.p>
               </div>
-              <div className="p-6 space-y-3">
+              <motion.div
+                className="p-6 space-y-3"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
                 <button
                   onClick={() => switchMode(1)}
-                  className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm"
+                  className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm"
                 >
                   Create a new wallet
                 </button>
                 <button
                   onClick={() => switchMode(2)}
-                  className="w-full py-3.5 rounded-xl bg-secondary text-foreground font-semibold text-sm"
+                  className="w-full py-3.5 rounded-2xl bg-secondary/80 text-foreground font-semibold text-sm hover:bg-secondary transition-colors"
                 >
                   I already have a wallet
                 </button>
-              </div>
+              </motion.div>
             </motion.div>
           )}
 
@@ -96,12 +106,13 @@ const Onboarding = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col p-6"
+              style={{ background: "hsl(240, 6%, 10%)" }}
             >
               <button
                 onClick={() => switchMode(0)}
                 className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-8"
               >
-                ←
+                <ArrowLeft className="w-4 h-4" />
               </button>
               <h2 className="text-2xl font-bold text-foreground mb-2">
                 {step === 1 ? "Create your wallet" : "Welcome back"}
@@ -151,7 +162,7 @@ const Onboarding = () => {
               <button
                 onClick={step === 1 ? handleSignUp : handleLogin}
                 disabled={!name.trim() || !password}
-                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-30 transition-opacity"
+                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-30 transition-opacity"
               >
                 {step === 1 ? "Create Wallet" : "Log In"}
               </button>

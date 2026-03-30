@@ -3,12 +3,9 @@ import { Search } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import { allCoins } from "@/data/coins";
 
-type Category = "trending" | "top" | "new";
-
 const ExploreScreen = () => {
   const { setActiveTab, setExploreBuySymbol } = useWallet();
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<Category>("trending");
 
   const filtered = allCoins.filter(
     (c) =>
@@ -16,25 +13,19 @@ const ExploreScreen = () => {
       c.symbol.toLowerCase().includes(search.toLowerCase())
   );
 
-  const sorted = [...filtered].sort((a, b) => {
-    if (category === "trending") return Math.abs(b.change) - Math.abs(a.change);
-    if (category === "top") return b.price * 1000 - a.price * 1000;
-    return 0;
-  });
-
   const formatPrice = (p: number) => {
     if (p >= 1) return "$" + p.toLocaleString(undefined, { maximumFractionDigits: 2 });
     return "$" + p.toFixed(6);
   };
 
-  const handleBuy = (symbol: string) => {
+  const handleTrade = (symbol: string) => {
     setExploreBuySymbol(symbol);
     setActiveTab("buy");
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="px-4 pt-4 pb-2">
+      <div className="px-4 pt-4 pb-3">
         <div className="flex items-center gap-2 bg-secondary rounded-xl px-3 py-2.5">
           <Search className="w-4 h-4 text-muted-foreground" />
           <input
@@ -47,43 +38,13 @@ const ExploreScreen = () => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 px-4 pb-3">
-        {([
-          { id: "trending" as Category, label: "🔥 Trending" },
-          { id: "top" as Category, label: "💎 Top" },
-          { id: "new" as Category, label: "✨ New" },
-        ]).map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setCategory(cat.id)}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
-              category === cat.id
-                ? "bg-primary/20 text-primary"
-                : "bg-secondary text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
       <div className="flex-1 overflow-y-auto px-3">
-        {sorted.map((coin) => (
-          <div
-            key={coin.symbol}
-            className="flex items-center justify-between py-3 px-1"
-          >
+        {filtered.map((coin) => (
+          <div key={coin.symbol} className="flex items-center justify-between py-3 px-1">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="w-10 h-10 rounded-full overflow-hidden bg-secondary flex items-center justify-center shrink-0">
-                <img
-                  src={coin.logo}
-                  alt={coin.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const el = e.target as HTMLImageElement;
-                    el.style.display = "none";
-                    el.parentElement!.innerHTML = `<span class="text-xs font-bold text-foreground">${coin.symbol.charAt(0)}</span>`;
-                  }}
+                <img src={coin.logo} alt={coin.name} className="w-full h-full object-cover"
+                  onError={(e) => { const el = e.target as HTMLImageElement; el.style.display = "none"; el.parentElement!.innerHTML = `<span class="text-xs font-bold text-foreground">${coin.symbol.charAt(0)}</span>`; }}
                 />
               </div>
               <div className="min-w-0">
@@ -99,7 +60,7 @@ const ExploreScreen = () => {
                 </p>
               </div>
               <button
-                onClick={() => handleBuy(coin.symbol)}
+                onClick={() => handleTrade(coin.symbol)}
                 className="px-3 py-1.5 rounded-lg bg-primary/20 text-primary text-xs font-semibold hover:bg-primary/30 transition-colors"
               >
                 Trade
@@ -107,7 +68,7 @@ const ExploreScreen = () => {
             </div>
           </div>
         ))}
-        {sorted.length === 0 && (
+        {filtered.length === 0 && (
           <div className="flex items-center justify-center py-12">
             <p className="text-sm text-muted-foreground">No tokens found</p>
           </div>
