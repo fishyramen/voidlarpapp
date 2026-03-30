@@ -2,7 +2,7 @@ import { useWallet } from "@/context/WalletContext";
 import { ChevronRight, BadgeCheck } from "lucide-react";
 
 const TokenList = () => {
-  const { tokens, cashBalance, setCashBalance, setActiveTab } = useWallet();
+  const { tokens } = useWallet();
 
   const formatBalance = (balance: number) => {
     if (balance >= 1000000) return (balance / 1000000).toFixed(2) + "M";
@@ -12,55 +12,25 @@ const TokenList = () => {
     return "0";
   };
 
-  const visibleTokens = tokens.filter(t => t.balance * t.priceUsd >= 0.01 || t.balance > 0);
-
-  const handleAddCash = () => {
-    setActiveTab("buy");
-  };
+  const visibleTokens = tokens.filter(t => t.balance > 0);
 
   return (
     <div className="flex-1 px-3 overflow-y-auto">
-      {/* Cash Balance Card */}
-      <div className="mx-1 mb-3 bg-secondary rounded-2xl px-4 py-3 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground font-medium">Cash Balance</p>
-          <p className="text-lg font-bold text-foreground">${cashBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
-        </div>
-        <button
-          onClick={handleAddCash}
-          className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
-        >
-          Add Cash
-        </button>
-      </div>
-
-      {/* Tokens Header */}
       <div className="flex items-center gap-1 px-1 mb-2">
         <h2 className="text-base font-bold text-foreground">Tokens</h2>
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
       </div>
 
-      {/* Token Rows */}
       <div className="space-y-1.5">
         {visibleTokens.map((token) => {
           const value = token.balance * token.priceUsd;
           const changeValue = value * (token.change / 100);
           return (
-            <div
-              key={token.symbol}
-              className="flex items-center justify-between py-3 px-3 rounded-2xl bg-secondary"
-            >
+            <div key={token.symbol} className="flex items-center justify-between py-3 px-3 rounded-2xl bg-secondary">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-                  <img
-                    src={token.logo}
-                    alt={token.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const el = e.target as HTMLImageElement;
-                      el.style.display = "none";
-                      el.parentElement!.innerHTML = `<span class="text-xs font-bold text-foreground">${token.symbol.charAt(0)}</span>`;
-                    }}
+                  <img src={token.logo} alt={token.name} className="w-full h-full object-cover"
+                    onError={(e) => { const el = e.target as HTMLImageElement; el.style.display = "none"; el.parentElement!.innerHTML = `<span class="text-xs font-bold text-foreground">${token.symbol.charAt(0)}</span>`; }}
                   />
                 </div>
                 <div>

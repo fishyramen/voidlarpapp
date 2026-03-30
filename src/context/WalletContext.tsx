@@ -44,6 +44,8 @@ interface WalletState {
   buyToken: (symbol: string, usdAmount: number) => void;
   sellToken: (symbol: string, tokenAmount: number) => void;
   sendToUser: (toUsername: string, symbol: string, amount: number) => { success: boolean; error?: string };
+  addToBalance: (amount: number) => void;
+  removeFromBalance: (amount: number) => boolean;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   exploreBuySymbol: string;
@@ -122,7 +124,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const setUsername = (name: string) => {
     setUsernameState(name);
     localStorage.setItem("phantom_current_user", name);
-    // Reload account data
     const accounts = getAccounts();
     const account = accounts[name.toLowerCase()];
     if (account) {
@@ -134,12 +135,9 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 
   const setHasOnboarded = (v: boolean) => {
     setHasOnboardedState(v);
-    if (!v) {
-      localStorage.removeItem("phantom_current_user");
-    }
+    if (!v) localStorage.removeItem("phantom_current_user");
   };
 
-  // Persist to accounts on change
   useEffect(() => {
     if (!username) return;
     const accounts = getAccounts();
@@ -162,20 +160,50 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     }, ...prev]);
   };
 
+  const addToBalance = (amount: number) => {
+    if (amount <= 0) return;
+    setCashBalance(prev => prev + amount);
+  };
+
+  const removeFromBalance = (amount: number): boolean => {
+    if (amount <= 0) return false;
+    if (amount > totalBalance) return false;
+
+    let remaining = amount;
+
+    // First take from cash
+    const cashTaken = Math.min(cashBalance, remaining);
+    if (cashTaken > 0) {
+      setCashBalance(prev => prev - cashTaken);
+      remaining -= cashTaken;
+    }
+
+    // Then sell tokens proportionally
+    if (remaining > 0) {
+      const holdingsValue = tokens.reduce((sum, t) => sum + t.balance * t.priceUsd, 0);
+      if (holdingsValue < remaining) return false;
+      setTokens(prev => prev.map(t => {
+        const tokenValue = t.balance * t.priceUsd;
+        if (tokenValue <= 0) return t;
+        const proportion = tokenValue / holdingsValue;
+        const toSell = (remaining * proportion) / t.priceUsd;
+        return { ...t, balance: Math.max(0, t.balance - toSell) };
+      }));
+    }
+    return true;
+  };
+
   const swapTokens = (fromSymbol: string, toSymbol: string, fromAmount: number) => {
     const fromToken = tokens.find(t => t.symbol === fromSymbol);
     const toToken = tokens.find(t => t.symbol === toSymbol);
     if (!fromToken || !toToken || fromToken.balance < fromAmount) return;
-
     const usdValue = fromAmount * fromToken.priceUsd;
     const toAmount = usdValue / toToken.priceUsd;
-
     setTokens(prev => prev.map(t => {
       if (t.symbol === fromSymbol) return { ...t, balance: t.balance - fromAmount };
       if (t.symbol === toSymbol) return { ...t, balance: t.balance + toAmount };
       return t;
     }));
-
     addTransaction({ type: "swap", fromToken: fromSymbol, toToken: toSymbol, amount: fromAmount, value: usdValue });
   };
 
@@ -183,7 +211,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     if (usdAmount <= 0 || usdAmount > cashBalance) return;
     const token = tokens.find(t => t.symbol === symbol);
     if (!token) return;
-
     const tokenAmount = usdAmount / token.priceUsd;
     setCashBalance(prev => prev - usdAmount);
     setTokens(prev => prev.map(t =>
@@ -214,13 +241,8 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       setCashBalance(prev => prev - amount);
       recipient.cashBalance = (recipient.cashBalance || 0) + amount;
       recipient.transactions = [{
-        id: Math.random().toString(36).slice(2),
-        timestamp: Date.now(),
-        type: "receive",
-        toToken: "CASH",
-        amount,
-        value: amount,
-        address: username,
+        id: Math.random().toString(36).slice(2), timestamp: Date.now(),
+        type: "receive", toToken: "CASH", amount, value: amount, address: username,
       }, ...recipient.transactions];
       saveAccount(recipient);
       addTransaction({ type: "send", fromToken: "CASH", amount, value: amount, address: toUsername });
@@ -229,28 +251,17 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 
     const senderToken = tokens.find(t => t.symbol === symbol);
     if (!senderToken || senderToken.balance < amount) return { success: false, error: "Insufficient balance" };
-
     const usdValue = amount * senderToken.priceUsd;
     setTokens(prev => prev.map(t =>
       t.symbol === symbol ? { ...t, balance: t.balance - amount } : t
     ));
-
-    // Add to recipient
     const recipientToken = recipient.tokens.find((t: Token) => t.symbol === symbol);
-    if (recipientToken) {
-      recipientToken.balance += amount;
-    }
+    if (recipientToken) recipientToken.balance += amount;
     recipient.transactions = [{
-      id: Math.random().toString(36).slice(2),
-      timestamp: Date.now(),
-      type: "receive",
-      toToken: symbol,
-      amount,
-      value: usdValue,
-      address: username,
+      id: Math.random().toString(36).slice(2), timestamp: Date.now(),
+      type: "receive", toToken: symbol, amount, value: usdValue, address: username,
     }, ...recipient.transactions];
     saveAccount(recipient);
-
     addTransaction({ type: "send", fromToken: symbol, amount, value: usdValue, address: toUsername });
     return { success: true };
   };
@@ -270,6 +281,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       username, setUsername, hasOnboarded, setHasOnboarded,
       tokens, setTokens, totalBalance, cashBalance, setCashBalance,
       transactions, addTransaction, swapTokens, buyToken, sellToken, sendToUser,
+      addToBalance, removeFromBalance,
       activeTab, setActiveTab, exploreBuySymbol, setExploreBuySymbol, logout,
     }}>
       {children}

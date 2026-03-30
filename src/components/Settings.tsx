@@ -1,136 +1,330 @@
 import { useState } from "react";
-import { ArrowLeft, Plus, Minus, LogOut } from "lucide-react";
+import { ArrowLeft, X, Search, ChevronRight, Users, SlidersHorizontal, Shield, Globe, Smile, Layers, Code, HelpCircle, Heart, LogOut, Moon, Sun, Bell, Lock, Key, Eye, Fingerprint, Wifi, WifiOff, ToggleLeft, ToggleRight } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
+import phantomLogo from "@/assets/phantom-logo.png";
 
 interface SettingsProps {
   onClose: () => void;
 }
 
+type SettingsView = "main" | "preferences" | "security" | "networks" | "addressBook" | "connectedApps" | "developer";
+
 const Settings = ({ onClose }: SettingsProps) => {
-  const { username, totalBalance, cashBalance, setCashBalance, tokens, logout } = useWallet();
-  const [amount, setAmount] = useState("");
+  const { username, logout } = useWallet();
+  const [view, setView] = useState<SettingsView>("main");
+  const [search, setSearch] = useState("");
 
-  const handleAdd = () => {
-    const val = parseFloat(amount);
-    if (!val || val <= 0) return;
-    setCashBalance(prev => prev + val);
-    setAmount("");
+  // Preferences state
+  const [currency, setCurrency] = useState("USD");
+  const [language, setLanguage] = useState("English");
+  const [darkMode, setDarkMode] = useState(true);
+  const [notifications, setNotifications] = useState(true);
+  const [hideSmallBalances, setHideSmallBalances] = useState(false);
+
+  // Security state
+  const [autoLock, setAutoLock] = useState("5 minutes");
+  const [biometrics, setBiometrics] = useState(false);
+  const [txConfirmation, setTxConfirmation] = useState(true);
+
+  // Networks state
+  const [networks, setNetworks] = useState([
+    { name: "Solana", enabled: true },
+    { name: "Ethereum", enabled: true },
+    { name: "Polygon", enabled: true },
+    { name: "Bitcoin", enabled: true },
+    { name: "Base", enabled: false },
+    { name: "Arbitrum", enabled: false },
+    { name: "Avalanche", enabled: false },
+  ]);
+
+  const toggleNetwork = (idx: number) => {
+    setNetworks(prev => prev.map((n, i) => i === idx ? { ...n, enabled: !n.enabled } : n));
   };
 
-  const handleRemove = () => {
-    const val = parseFloat(amount);
-    if (!val || val <= 0) return;
-    setCashBalance(prev => Math.max(0, prev - val));
-    setAmount("");
-  };
+  const enabledCount = networks.filter(n => n.enabled).length;
 
-  const presetAmounts = [100, 500, 1000, 5000];
+  if (view === "preferences") {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-bold text-foreground">Preferences</h1>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-6">
+          <SettingToggle label="Dark Mode" icon={darkMode ? <Moon className="w-5 h-5 text-primary" /> : <Sun className="w-5 h-5 text-primary" />} enabled={darkMode} onToggle={() => setDarkMode(!darkMode)} />
+          <SettingToggle label="Notifications" icon={<Bell className="w-5 h-5 text-primary" />} enabled={notifications} onToggle={() => setNotifications(!notifications)} />
+          <SettingToggle label="Hide Small Balances" icon={<Eye className="w-5 h-5 text-primary" />} enabled={hideSmallBalances} onToggle={() => setHideSmallBalances(!hideSmallBalances)} />
+          <SettingSelect label="Currency" value={currency} options={["USD", "EUR", "GBP", "JPY", "CAD", "AUD"]} onChange={setCurrency} />
+          <SettingSelect label="Language" value={language} options={["English", "Spanish", "French", "German", "Japanese", "Chinese"]} onChange={setLanguage} />
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "security") {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-bold text-foreground">Security & Privacy</h1>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-6">
+          <SettingToggle label="Biometric Unlock" icon={<Fingerprint className="w-5 h-5 text-primary" />} enabled={biometrics} onToggle={() => setBiometrics(!biometrics)} />
+          <SettingToggle label="Transaction Confirmation" icon={<Lock className="w-5 h-5 text-primary" />} enabled={txConfirmation} onToggle={() => setTxConfirmation(!txConfirmation)} />
+          <SettingSelect label="Auto-Lock Timer" value={autoLock} options={["1 minute", "5 minutes", "15 minutes", "1 hour", "Never"]} onChange={setAutoLock} />
+          <div className="bg-secondary rounded-2xl p-4 mt-4">
+            <button className="w-full flex items-center gap-3">
+              <Key className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium text-foreground flex-1 text-left">Change Password</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+          <div className="bg-secondary rounded-2xl p-4">
+            <button className="w-full flex items-center gap-3">
+              <Shield className="w-5 h-5 text-primary" />
+              <span className="text-sm font-medium text-foreground flex-1 text-left">Show Recovery Phrase</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "networks") {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-bold text-foreground">Active Networks</h1>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-6">
+          {networks.map((net, idx) => (
+            <div key={net.name} className="bg-secondary rounded-2xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {net.enabled ? <Wifi className="w-5 h-5 text-success" /> : <WifiOff className="w-5 h-5 text-muted-foreground" />}
+                <span className="text-sm font-medium text-foreground">{net.name}</span>
+              </div>
+              <button onClick={() => toggleNetwork(idx)}>
+                {net.enabled
+                  ? <ToggleRight className="w-6 h-6 text-primary" />
+                  : <ToggleLeft className="w-6 h-6 text-muted-foreground" />
+                }
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "addressBook") {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-bold text-foreground">Address Book</h1>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <Smile className="w-10 h-10 text-muted-foreground mb-3" />
+          <p className="text-sm text-muted-foreground text-center">No saved addresses yet. Addresses you transact with will appear here.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "connectedApps") {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-bold text-foreground">Connected Apps</h1>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6">
+          <Layers className="w-10 h-10 text-muted-foreground mb-3" />
+          <p className="text-sm text-muted-foreground text-center">No connected apps. Apps you connect to will appear here.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "developer") {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-bold text-foreground">Developer Settings</h1>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-6">
+          <div className="bg-secondary rounded-2xl p-4">
+            <p className="text-sm font-medium text-foreground mb-1">Testnet Mode</p>
+            <p className="text-xs text-muted-foreground">Enable testnet networks for development</p>
+          </div>
+          <div className="bg-secondary rounded-2xl p-4">
+            <p className="text-sm font-medium text-foreground mb-1">RPC Endpoint</p>
+            <p className="text-xs text-muted-foreground break-all">https://api.mainnet-beta.solana.com</p>
+          </div>
+          <div className="bg-secondary rounded-2xl p-4">
+            <p className="text-sm font-medium text-foreground mb-1">Version</p>
+            <p className="text-xs text-muted-foreground">Phantom v24.12.0</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main settings view
+  const menuSections = [
+    {
+      items: [
+        { icon: <Users className="w-5 h-5 text-primary" />, label: "Manage Accounts", badge: "1", onClick: () => {} },
+        { icon: <SlidersHorizontal className="w-5 h-5 text-primary" />, label: "Preferences", onClick: () => setView("preferences") },
+        { icon: <Shield className="w-5 h-5 text-primary" />, label: "Security & Privacy", onClick: () => setView("security") },
+      ],
+    },
+    {
+      items: [
+        { icon: <Globe className="w-5 h-5 text-primary" />, label: "Active Networks", badge: enabledCount === networks.length ? "All" : `${enabledCount}`, onClick: () => setView("networks") },
+        { icon: <Smile className="w-5 h-5 text-primary" />, label: "Address Book", onClick: () => setView("addressBook") },
+        { icon: <Layers className="w-5 h-5 text-primary" />, label: "Connected Apps", onClick: () => setView("connectedApps") },
+      ],
+    },
+    {
+      items: [
+        { icon: <Code className="w-5 h-5 text-primary" />, label: "Developer Settings", onClick: () => setView("developer") },
+      ],
+    },
+    {
+      items: [
+        { icon: <HelpCircle className="w-5 h-5 text-primary" />, label: "Help & Support", onClick: () => {} },
+        { icon: <Heart className="w-5 h-5 text-primary" />, label: "Invite your friends", onClick: () => {} },
+      ],
+    },
+  ];
+
+  const filteredSections = search
+    ? [{
+        items: menuSections
+          .flatMap(s => s.items)
+          .filter(i => i.label.toLowerCase().includes(search.toLowerCase())),
+      }]
+    : menuSections;
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-4 pt-3 pb-2">
-        <button onClick={onClose} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="w-4 h-4" />
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+        <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground">
+          <X className="w-5 h-5" />
         </button>
-        <h1 className="text-base font-semibold text-foreground">Settings</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 space-y-4 pb-6">
-        {/* Username */}
-        <div className="bg-secondary rounded-2xl p-4">
-          <label className="text-xs text-muted-foreground font-medium mb-2 block uppercase tracking-wide">Account</label>
-          <span className="text-foreground font-medium">@{username}</span>
+      {/* Search */}
+      <div className="px-4 pb-3">
+        <div className="flex items-center gap-2 bg-secondary rounded-xl px-3 py-2.5">
+          <Search className="w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none flex-1"
+          />
         </div>
+      </div>
 
-        {/* Manage Balance */}
-        <div className="bg-secondary rounded-2xl p-4 space-y-4">
-          <div>
-            <label className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Cash Balance</label>
-            <p className="text-2xl font-bold text-foreground mt-1">${cashBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
-            <p className="text-xs text-muted-foreground mt-1">Add money to your balance, then use Buy to get crypto tokens.</p>
+      {/* Account card */}
+      <div className="px-4 pb-3">
+        <div className="bg-secondary rounded-2xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden">
+            <img src={phantomLogo} alt="Profile" className="w-full h-full object-cover" />
           </div>
+          <span className="text-base font-medium text-foreground flex-1">@{username}</span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+        </div>
+      </div>
 
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-medium">$</span>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              className="w-full py-3 pl-7 pr-3 rounded-xl bg-background text-foreground text-lg font-medium focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            {presetAmounts.map(a => (
+      {/* Menu sections */}
+      <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-6">
+        {filteredSections.map((section, si) => (
+          <div key={si} className="bg-secondary rounded-2xl overflow-hidden divide-y divide-border">
+            {section.items.map((item, ii) => (
               <button
-                key={a}
-                onClick={() => setAmount(String(a))}
-                className="flex-1 py-2 rounded-xl bg-background text-foreground text-xs font-medium hover:bg-muted transition-colors"
+                key={ii}
+                onClick={item.onClick}
+                className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors"
               >
-                ${a.toLocaleString()}
+                {item.icon}
+                <span className="text-sm font-medium text-foreground flex-1 text-left">{item.label}</span>
+                {item.badge && (
+                  <span className="text-xs text-muted-foreground mr-1">{item.badge}</span>
+                )}
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
             ))}
           </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={handleAdd}
-              className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-success text-primary-foreground font-semibold text-sm"
-            >
-              <Plus className="w-4 h-4" /> Add
-            </button>
-            <button
-              onClick={handleRemove}
-              className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl bg-destructive text-destructive-foreground font-semibold text-sm"
-            >
-              <Minus className="w-4 h-4" /> Remove
-            </button>
-          </div>
-        </div>
-
-        {/* Holdings */}
-        <div className="bg-secondary rounded-2xl p-4">
-          <label className="text-xs text-muted-foreground font-medium mb-3 block uppercase tracking-wide">Holdings</label>
-          <div className="space-y-2.5">
-            {tokens.map(t => {
-              const value = t.balance * t.priceUsd;
-              if (value < 0.01) return null;
-              return (
-                <div key={t.symbol} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full overflow-hidden bg-muted">
-                      <img src={t.logo} alt={t.name} className="w-full h-full object-cover" />
-                    </div>
-                    <span className="text-sm text-foreground">{t.symbol}</span>
-                  </div>
-                  <span className="text-sm text-foreground font-medium">${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-                </div>
-              );
-            })}
-            {cashBalance > 0 && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center text-success text-xs font-bold">$</div>
-                  <span className="text-sm text-foreground">Cash</span>
-                </div>
-                <span className="text-sm text-foreground font-medium">${cashBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-              </div>
-            )}
-          </div>
-          <div className="border-t border-border mt-3 pt-3 flex justify-between">
-            <span className="text-sm font-semibold text-foreground">Total</span>
-            <span className="text-sm font-semibold text-foreground">${totalBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-          </div>
-        </div>
+        ))}
 
         <button
           onClick={logout}
-          className="w-full py-3 rounded-xl border border-destructive/50 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-2xl border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
         >
           <LogOut className="w-4 h-4" /> Log Out
         </button>
       </div>
+    </div>
+  );
+};
+
+// Helper components
+const SettingToggle = ({ label, icon, enabled, onToggle }: { label: string; icon: React.ReactNode; enabled: boolean; onToggle: () => void }) => (
+  <div className="bg-secondary rounded-2xl p-4 flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      {icon}
+      <span className="text-sm font-medium text-foreground">{label}</span>
+    </div>
+    <button onClick={onToggle}>
+      {enabled
+        ? <ToggleRight className="w-6 h-6 text-primary" />
+        : <ToggleLeft className="w-6 h-6 text-muted-foreground" />
+      }
+    </button>
+  </div>
+);
+
+const SettingSelect = ({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="bg-secondary rounded-2xl p-4">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between">
+        <span className="text-sm font-medium text-foreground">{label}</span>
+        <span className="text-sm text-muted-foreground">{value}</span>
+      </button>
+      {open && (
+        <div className="mt-3 space-y-1">
+          {options.map(opt => (
+            <button
+              key={opt}
+              onClick={() => { onChange(opt); setOpen(false); }}
+              className={`w-full text-left py-2 px-3 rounded-xl text-sm transition-colors ${opt === value ? "bg-primary/20 text-primary font-medium" : "text-foreground hover:bg-muted"}`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

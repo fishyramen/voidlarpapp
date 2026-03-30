@@ -1,4 +1,4 @@
-import { Home, Monitor, ArrowLeftRight, MessageSquare, Search } from "lucide-react";
+import { Home, Monitor, ArrowLeftRight, Search } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 
 const BottomNav = () => {
@@ -8,7 +8,6 @@ const BottomNav = () => {
     { icon: Home, id: "wallet" },
     { icon: Monitor, id: "activity" },
     { icon: ArrowLeftRight, id: "swap" },
-    { icon: MessageSquare, id: "send" },
     { icon: Search, id: "explore" },
   ];
 
