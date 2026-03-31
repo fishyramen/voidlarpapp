@@ -110,6 +110,24 @@ export const signIn = (username: string, password: string): { success: boolean; 
 };
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
+    // === LICENSE STATE (NEW) ===
+  const [license, setLicenseState] = useState<LicenseData | null>(() => {
+    const raw = localStorage.getItem("voidlarp_license");
+    return raw ? JSON.parse(raw) : null;
+  });
+
+  const setLicense = (license: LicenseData | null) => {
+    setLicenseState(license);
+    if (license) {
+      localStorage.setItem("voidlarp_license", JSON.stringify(license));
+    } else {
+      localStorage.removeItem("voidlarp_license");
+    }
+  };
+
+  const isLicenseValid = !license || !isLicenseExpired(license.expirationDate);
+  const daysUntilExpiry = license ? getDaysUntilExpiry(license.expirationDate) : null;
+  // === END LICENSE STATE ===
   const [username, setUsernameState] = useState(() => localStorage.getItem("phantom_current_user") || "");
   const [hasOnboarded, setHasOnboardedState] = useState(() => !!localStorage.getItem("phantom_current_user"));
   const [activeTab, setActiveTab] = useState("wallet");
