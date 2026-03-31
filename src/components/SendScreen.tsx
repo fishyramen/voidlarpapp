@@ -25,10 +25,7 @@ const SendScreen = () => {
     setTimeout(() => { setActiveTab("wallet"); setSuccess(false); }, 1500);
   };
 
-  const allOptions = [
-    { symbol: "CASH", name: "Cash Balance", balance: cashBalance, logo: "" },
-    ...tokens.filter(t => t.balance > 0),
-  ];
+  const allOptions = tokens.filter(t => t.balance > 0);
 
   if (success) {
     return (
