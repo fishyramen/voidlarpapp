@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import WalletHeader from "@/components/WalletHeader";
 import WalletBalance from "@/components/WalletBalance";
 import ActionButtons from "@/components/ActionButtons";
@@ -14,16 +14,28 @@ import ExploreScreen from "@/components/ExploreScreen";
 import AccountOverlay from "@/components/AccountOverlay";
 import ProfileScreen from "@/components/ProfileScreen";
 import SearchOverlay from "@/components/SearchOverlay";
+import TokenDetail from "@/components/TokenDetail";
 import Onboarding from "@/components/Onboarding";
+import SplashScreen from "@/components/SplashScreen";
 import { useWallet } from "@/context/WalletContext";
 
 const Index = () => {
-  const { hasOnboarded, activeTab, exploreBuySymbol } = useWallet();
+  const { hasOnboarded, activeTab } = useWallet();
   const [overlay, setOverlay] = useState<"none" | "account" | "settings" | "profile" | "search">("none");
+  const [showSplash, setShowSplash] = useState(true);
+  const [selectedToken, setSelectedToken] = useState<string | null>(null);
 
+  const handleSplashComplete = useCallback(() => setShowSplash(false), []);
+
+  if (showSplash) return <SplashScreen onComplete={handleSplashComplete} />;
   if (!hasOnboarded) return <Onboarding />;
 
   const renderContent = () => {
+    // Token detail view (from explore)
+    if (selectedToken) return (
+      <TokenDetail symbol={selectedToken} onClose={() => setSelectedToken(null)} />
+    );
+
     if (overlay === "account") return (
       <AccountOverlay
         onClose={() => setOverlay("none")}
@@ -77,7 +89,7 @@ const Index = () => {
         return (
           <>
             <WalletHeader onOpenAccount={() => setOverlay("account")} onOpenSearch={() => setOverlay("search")} />
-            <ExploreScreen />
+            <ExploreScreen onSelectToken={(s) => setSelectedToken(s)} />
             <BottomNav />
           </>
         );
@@ -96,7 +108,7 @@ const Index = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-[400px] h-[780px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl">
+      <div className="w-full max-w-[400px] h-[780px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
         {renderContent()}
       </div>
     </div>
