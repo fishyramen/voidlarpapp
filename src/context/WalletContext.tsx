@@ -31,6 +31,12 @@ interface UserAccount {
 }
 
 interface WalletState {
+    // === LICENSE FIELDS (NEW) ===
+  license: LicenseData | null;
+  setLicense: (license: LicenseData | null) => void;
+  isLicenseValid: boolean;
+  daysUntilExpiry: number | null;
+  // === END LICENSE FIELDS ===
   username: string;
   setUsername: (name: string) => void;
   hasOnboarded: boolean;
