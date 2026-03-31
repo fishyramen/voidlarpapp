@@ -3,7 +3,7 @@ import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 
 const SendScreen = () => {
-  const { tokens, cashBalance, sendToUser, setActiveTab } = useWallet();
+  const { tokens, sendToUser, setActiveTab } = useWallet();
   const [recipient, setRecipient] = useState("");
   const [selectedToken, setSelectedToken] = useState("SOL");
   const [amount, setAmount] = useState("");
