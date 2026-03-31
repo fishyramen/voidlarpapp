@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { allCoins } from "@/data/coins";
+// === NEW: License utils import ===
 import { LicenseData, calculateExpiration, isLicenseExpired, getDaysUntilExpiry } from "@/lib/utils";
+// === END NEW ===
 
 export interface Token {
   symbol: string;
@@ -31,12 +33,6 @@ interface UserAccount {
 }
 
 interface WalletState {
-    // === LICENSE FIELDS (NEW) ===
-  license: LicenseData | null;
-  setLicense: (license: LicenseData | null) => void;
-  isLicenseValid: boolean;
-  daysUntilExpiry: number | null;
-  // === END LICENSE FIELDS ===
   username: string;
   setUsername: (name: string) => void;
   hasOnboarded: boolean;
@@ -56,6 +52,12 @@ interface WalletState {
   currency: string;
   setCurrency: (c: string) => void;
   logout: () => void;
+  // === NEW: License fields ===
+  license: LicenseData | null;
+  setLicense: (license: LicenseData | null) => void;
+  isLicenseValid: boolean;
+  daysUntilExpiry: number | null;
+  // === END NEW ===
 }
 
 const defaultTokens: Token[] = allCoins.map(coin => ({
@@ -110,7 +112,12 @@ export const signIn = (username: string, password: string): { success: boolean; 
 };
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
-    // === LICENSE STATE (NEW) ===
+  const [username, setUsernameState] = useState(() => localStorage.getItem("phantom_current_user") || "");
+  const [hasOnboarded, setHasOnboardedState] = useState(() => !!localStorage.getItem("phantom_current_user"));
+  const [activeTab, setActiveTab] = useState("wallet");
+  const [exploreBuySymbol, setExploreBuySymbol] = useState("");
+
+  // === NEW: License state ===
   const [license, setLicenseState] = useState<LicenseData | null>(() => {
     const raw = localStorage.getItem("voidlarp_license");
     return raw ? JSON.parse(raw) : null;
@@ -127,11 +134,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 
   const isLicenseValid = !license || !isLicenseExpired(license.expirationDate);
   const daysUntilExpiry = license ? getDaysUntilExpiry(license.expirationDate) : null;
-  // === END LICENSE STATE ===
-  const [username, setUsernameState] = useState(() => localStorage.getItem("phantom_current_user") || "");
-  const [hasOnboarded, setHasOnboardedState] = useState(() => !!localStorage.getItem("phantom_current_user"));
-  const [activeTab, setActiveTab] = useState("wallet");
-  const [exploreBuySymbol, setExploreBuySymbol] = useState("");
+  // === END NEW ===
 
   const loadAccount = (): UserAccount | null => {
     if (!username) return null;
@@ -175,6 +178,14 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       saveAccount(account);
     }
   }, [tokens, transactions, username, currency]);
+
+  // === NEW: Auto-logout if license expired ===
+  useEffect(() => {
+    if (license && !isLicenseValid && hasOnboarded) {
+      logout();
+    }
+  }, [isLicenseValid, license, hasOnboarded]);
+  // === END NEW ===
 
   const totalBalance = tokens.reduce((sum, t) => sum + t.balance * t.priceUsd, 0);
 
@@ -241,6 +252,9 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     setActiveTab("wallet");
     setCurrencyState("USD");
     localStorage.removeItem("phantom_current_user");
+    // === NEW: Clear license on logout ===
+    setLicense(null);
+    // === END NEW ===
   };
 
   return (
@@ -250,6 +264,9 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       transactions, addTransaction, swapTokens, sellToken, sendToUser,
       activeTab, setActiveTab, exploreBuySymbol, setExploreBuySymbol,
       currency, setCurrency, logout,
+      // === NEW: License values ===
+      license, setLicense, isLicenseValid, daysUntilExpiry,
+      // === END NEW ===
     }}>
       {children}
     </WalletContext.Provider>
