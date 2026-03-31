@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { allCoins } from "@/data/coins";
+import { LicenseData, calculateExpiration, isLicenseExpired, getDaysUntilExpiry } from "@/lib/utils";
 
 export interface Token {
   symbol: string;
