@@ -1,5 +1,6 @@
 import { useWallet } from "@/context/WalletContext";
 import { ChevronRight, BadgeCheck } from "lucide-react";
+import { allCoins } from "@/data/coins";
 
 const TokenList = () => {
   const { tokens } = useWallet();
@@ -12,7 +13,18 @@ const TokenList = () => {
     return "0";
   };
 
-  const visibleTokens = tokens.filter(t => t.balance > 0);
+  // Merge all coins with wallet balances
+  const allTokensWithBalance = allCoins.map(coin => {
+    const held = tokens.find(t => t.symbol === coin.symbol);
+    return {
+      symbol: coin.symbol,
+      name: coin.name,
+      balance: held?.balance || 0,
+      priceUsd: held?.priceUsd || coin.price,
+      change: held?.change || coin.change,
+      logo: coin.logo,
+    };
+  });
 
   return (
     <div className="flex-1 px-3 overflow-y-auto">
@@ -22,7 +34,7 @@ const TokenList = () => {
       </div>
 
       <div className="space-y-1.5">
-        {visibleTokens.map((token) => {
+        {allTokensWithBalance.map((token) => {
           const value = token.balance * token.priceUsd;
           const changeValue = value * (token.change / 100);
           return (
@@ -42,20 +54,20 @@ const TokenList = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-foreground">${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
-                <p className={`text-xs font-medium ${token.change >= 0 ? "text-success" : "text-destructive"}`}>
-                  {token.change >= 0 ? "+" : "-"}${Math.abs(changeValue).toFixed(2)}
+                <p className="text-sm font-semibold text-foreground">
+                  ${value > 0 ? value.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "0.00"}
                 </p>
+                {value > 0 ? (
+                  <p className={`text-xs font-medium ${token.change >= 0 ? "text-success" : "text-destructive"}`}>
+                    {token.change >= 0 ? "+" : "-"}${Math.abs(changeValue).toFixed(2)}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">—</p>
+                )}
               </div>
             </div>
           );
         })}
-        {visibleTokens.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-muted-foreground text-sm">No tokens yet</p>
-            <p className="text-muted-foreground text-xs mt-1">Buy some crypto to get started</p>
-          </div>
-        )}
       </div>
       <div className="h-2" />
     </div>

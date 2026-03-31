@@ -14,8 +14,8 @@ const Settings = ({ onClose }: SettingsProps) => {
   const [view, setView] = useState<SettingsView>("main");
   const [search, setSearch] = useState("");
 
+  const { currency, setCurrency } = useWallet();
   // Preferences state
-  const [currency, setCurrency] = useState("USD");
   const [language, setLanguage] = useState("English");
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
