@@ -12,7 +12,7 @@ const SendScreen = () => {
   const [success, setSuccess] = useState(false);
 
   const token = tokens.find(t => t.symbol === selectedToken);
-  const maxBalance = selectedToken === "CASH" ? cashBalance : (token?.balance || 0);
+  const maxBalance = token?.balance || 0;
   const usdValue = selectedToken === "CASH" ? parseFloat(amount) || 0 : (parseFloat(amount) || 0) * (token?.priceUsd || 0);
 
   const handleSend = () => {
