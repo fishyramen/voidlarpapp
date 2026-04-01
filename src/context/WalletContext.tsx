@@ -5,7 +5,6 @@ import {
   getDaysRemaining,
   isLicenseKeyUsed,
   markLicenseKeyUsed,
-  clearUsedLicenseKey,
 } from "@/lib/license";
 import { toast } from "sonner";
 
@@ -129,41 +128,35 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const [activeTab, setActiveTab] = useState("wallet");
   const [exploreBuySymbol, setExploreBuySymbol] = useState("");
 
-  // License state
   const [license, setLicenseState] = useState<StoredLicense | null>(() => {
     const raw = localStorage.getItem("voidlarp_license");
     return raw ? JSON.parse(raw) : null;
   });
 
-  // FIXED: Synchronous setLicenseData - validation already done in LicenseInput
+  // Simple, synchronous license activation
   const setLicenseData = (lic: StoredLicense | null): void => {
     if (lic && lic.key) {
-      // Check if this key has already been activated (sync check)
+      // Check if key already used
       if (isLicenseKeyUsed(lic.key)) {
         toast.error('This license key has already been activated');
         return;
       }
       
-      // Mark this key as used to prevent reuse
+      // Mark as used
       markLicenseKeyUsed(lic.key);
       
-      // Save license data
+      // Save and activate
       setLicenseState(lic);
       localStorage.setItem("voidlarp_license", JSON.stringify(lic));
-      toast.success('License activated successfully!');
+      toast.success('License activated!');
     } else {
-      // Deactivating license
+      // Deactivate
       setLicenseState(null);
       localStorage.removeItem("voidlarp_license");
-      toast.success('License deactivated');
     }
   };
 
   const clearLicense = () => {
-    // Optional: Keep the key in used list to prevent re-use after deactivation
-    // If you want to allow re-use after deactivation, uncomment:
-    // if (license) { clearUsedLicenseKey(license.key); }
-    
     setLicenseState(null);
     localStorage.removeItem("voidlarp_license");
   };
