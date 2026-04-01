@@ -220,7 +220,7 @@ const Settings = ({ onClose }: SettingsProps) => {
           )}
         </div>
 
-        {/* Deactivation Confirmation Modal with Terms */}
+        {/* Deactivation Confirmation Modal with Fixed Checkboxes */}
         {showDeactivateConfirm && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
@@ -235,11 +235,11 @@ const Settings = ({ onClose }: SettingsProps) => {
                 Please confirm you understand the following before deactivating:
               </p>
               
-              {/* Terms Checkboxes */}
+              {/* Terms Checkboxes - FIXED */}
               <div className="space-y-3 mb-6">
                 <label className="flex items-start gap-3 cursor-pointer group">
-                  <div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors ${deactivateTerms.noRefund ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
-                    {deactivateTerms.noRefund && <Check className="w-3 h-3 text-primary-foreground" />}
+                  <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${deactivateTerms.noRefund ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
+                    {deactivateTerms.noRefund && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />}
                   </div>
                   <input
                     type="checkbox"
@@ -247,14 +247,14 @@ const Settings = ({ onClose }: SettingsProps) => {
                     onChange={(e) => setDeactivateTerms(prev => ({ ...prev, noRefund: e.target.checked }))}
                     className="sr-only"
                   />
-                  <span className="text-sm text-foreground group-hover:text-primary/90 transition-colors">
+                  <span className={`text-sm transition-colors ${deactivateTerms.noRefund ? 'text-primary font-medium' : 'text-foreground group-hover:text-primary/90'}`}>
                     I understand that deactivating my license is <strong>non-refundable</strong> and I will not receive a refund for any unused time.
                   </span>
                 </label>
                 
                 <label className="flex items-start gap-3 cursor-pointer group">
-                  <div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors ${deactivateTerms.balancesReset ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
-                    {deactivateTerms.balancesReset && <Check className="w-3 h-3 text-primary-foreground" />}
+                  <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${deactivateTerms.balancesReset ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
+                    {deactivateTerms.balancesReset && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />}
                   </div>
                   <input
                     type="checkbox"
@@ -262,14 +262,14 @@ const Settings = ({ onClose }: SettingsProps) => {
                     onChange={(e) => setDeactivateTerms(prev => ({ ...prev, balancesReset: e.target.checked }))}
                     className="sr-only"
                   />
-                  <span className="text-sm text-foreground group-hover:text-primary/90 transition-colors">
+                  <span className={`text-sm transition-colors ${deactivateTerms.balancesReset ? 'text-primary font-medium' : 'text-foreground group-hover:text-primary/90'}`}>
                     I understand that all my <strong>fake balances and transactions will be permanently reset</strong> and cannot be recovered.
                   </span>
                 </label>
                 
                 <label className="flex items-start gap-3 cursor-pointer group">
-                  <div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors ${deactivateTerms.reactivateNewKey ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
-                    {deactivateTerms.reactivateNewKey && <Check className="w-3 h-3 text-primary-foreground" />}
+                  <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${deactivateTerms.reactivateNewKey ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
+                    {deactivateTerms.reactivateNewKey && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />}
                   </div>
                   <input
                     type="checkbox"
@@ -277,7 +277,7 @@ const Settings = ({ onClose }: SettingsProps) => {
                     onChange={(e) => setDeactivateTerms(prev => ({ ...prev, reactivateNewKey: e.target.checked }))}
                     className="sr-only"
                   />
-                  <span className="text-sm text-foreground group-hover:text-primary/90 transition-colors">
+                  <span className={`text-sm transition-colors ${deactivateTerms.reactivateNewKey ? 'text-primary font-medium' : 'text-foreground group-hover:text-primary/90'}`}>
                     I understand that to use Voidlarp again, I will need to <strong>purchase and enter a new license key</strong>.
                   </span>
                 </label>
