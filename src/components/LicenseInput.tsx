@@ -6,7 +6,7 @@ import voidlarpLogo from "@/assets/voidlarp-logo.jpg";
 import { toast } from "sonner";
 
 interface LicenseInputProps {
-  onActivate: ( { key: string; planType: '7days' | '1month' | 'lifetime'; activationDate: string; expirationDate: string | null }) => void;
+  onActivate: (data: { key: string; planType: '7days' | '1month' | 'lifetime'; activationDate: string; expirationDate: string | null }) => void;
 }
 
 const LicenseInput = ({ onActivate }: LicenseInputProps) => {
@@ -33,7 +33,6 @@ const LicenseInput = ({ onActivate }: LicenseInputProps) => {
         return;
       }
 
-      // Pass validated data to parent
       onActivate({
         key: key.trim().toUpperCase(),
         planType: result.planType!,
