@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Key, Loader2, ExternalLink } from "lucide-react";
 import { validateLicense } from "@/lib/license";
 import voidlarpLogo from "@/assets/voidlarp-logo.jpg";
-import { toast } from "sonner";
 
 interface LicenseInputProps {
   onActivate: (data: { key: string; planType: '7days' | '1month' | 'lifetime'; activationDate: string; expirationDate: string | null }) => void;
@@ -28,11 +27,11 @@ const LicenseInput = ({ onActivate }: LicenseInputProps) => {
       
       if (!result.valid) {
         setError(result.error || "Invalid license key");
-        toast.error(result.error || "Invalid license");
         setLoading(false);
         return;
       }
 
+      // Pass validated data to parent (WalletContext handles toast + key reuse check)
       onActivate({
         key: key.trim().toUpperCase(),
         planType: result.planType!,
@@ -40,10 +39,9 @@ const LicenseInput = ({ onActivate }: LicenseInputProps) => {
         expirationDate: result.expirationDate ?? null,
       });
       
-      toast.success('License activated!');
+      // Don't show toast here - WalletContext will show it
     } catch (err) {
       setError("Failed to activate license");
-      toast.error("Failed to activate license");
       console.error('Activation error:', err);
     } finally {
       setLoading(false);
