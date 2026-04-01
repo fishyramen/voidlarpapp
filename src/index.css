@@ -15,7 +15,8 @@
     --popover: 240 5% 13%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 263 67% 58%;
+    /* NEW ACCENT: Soft lavender #ab9ff1 */
+    --primary: 255 78% 78%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 4% 16%;
@@ -24,7 +25,8 @@
     --muted: 240 4% 20%;
     --muted-foreground: 240 4% 50%;
 
-    --accent: 263 67% 58%;
+    /* NEW ACCENT: Soft lavender #ab9ff1 */
+    --accent: 255 78% 78%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 55%;
@@ -32,7 +34,9 @@
 
     --border: 240 4% 18%;
     --input: 240 4% 18%;
-    --ring: 263 67% 58%;
+    
+    /* NEW ACCENT: Soft lavender #ab9ff1 */
+    --ring: 255 78% 78%;
 
     --radius: 0.75rem;
 
@@ -41,12 +45,16 @@
 
     --sidebar-background: 240 6% 10%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 263 67% 58%;
+    
+    /* NEW ACCENT: Soft lavender #ab9ff1 */
+    --sidebar-primary: 255 78% 78%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 4% 16%;
     --sidebar-accent-foreground: 0 0% 75%;
     --sidebar-border: 240 4% 18%;
-    --sidebar-ring: 263 67% 58%;
+    
+    /* NEW ACCENT: Soft lavender #ab9ff1 */
+    --sidebar-ring: 255 78% 78%;
   }
 }
 
@@ -61,10 +69,12 @@
 }
 
 @layer utilities {
+  /* Updated gradient to use new accent */
   .phantom-gradient {
-    background: linear-gradient(135deg, hsl(263, 67%, 58%), hsl(220, 80%, 56%));
+    background: linear-gradient(135deg, hsl(255 78% 78%), hsl(220 70% 75%));
   }
+  /* Updated glow to use new accent */
   .phantom-glow {
-    box-shadow: 0 0 40px -10px hsl(263, 67%, 58% / 0.3);
+    box-shadow: 0 0 40px -10px hsl(255 78% 78% / 0.3);
   }
 }
