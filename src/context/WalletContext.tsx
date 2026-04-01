@@ -133,12 +133,14 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     return raw ? JSON.parse(raw) : null;
   });
 
-  // Simple, synchronous license activation
+  const [activationAttempted, setActivationAttempted] = useState(false);
+
   const setLicenseData = (lic: StoredLicense | null): void => {
     if (lic && lic.key) {
-      // Check if key already used
+      // Check if key already used BEFORE saving
       if (isLicenseKeyUsed(lic.key)) {
         toast.error('This license key has already been activated');
+        setActivationAttempted(true);
         return;
       }
       
@@ -149,8 +151,8 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       setLicenseState(lic);
       localStorage.setItem("voidlarp_license", JSON.stringify(lic));
       toast.success('License activated!');
+      setActivationAttempted(true);
     } else {
-      // Deactivate
       setLicenseState(null);
       localStorage.removeItem("voidlarp_license");
     }
