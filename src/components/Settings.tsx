@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { ArrowLeft, X, Search, ChevronRight, Users, SlidersHorizontal, Shield, Globe, Smile, Layers, Code, HelpCircle, Heart, LogOut, Moon, Sun, Bell, Lock, Key, Eye, Fingerprint, Wifi, WifiOff, ToggleLeft, ToggleRight, CreditCard } from "lucide-react";
+import { ArrowLeft, X, Search, ChevronRight, Users, SlidersHorizontal, Shield, Globe, Smile, Layers, Code, HelpCircle, Heart, LogOut, Moon, Sun, Bell, Lock, Key, Eye, Fingerprint, Wifi, WifiOff, ToggleLeft, ToggleRight, CreditCard, AlertTriangle } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import { getPlanLabel } from "@/lib/license";
 import phantomLogo from "@/assets/phantom-logo.png";
+import { toast } from "sonner";
 
 interface SettingsProps {
   onClose: () => void;
@@ -14,6 +15,7 @@ const Settings = ({ onClose }: SettingsProps) => {
   const { username, logout, license, daysUntilExpiry, clearLicense } = useWallet();
   const [view, setView] = useState<SettingsView>("main");
   const [search, setSearch] = useState("");
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const { currency, setCurrency } = useWallet();
   const [language, setLanguage] = useState("English");
   const [darkMode, setDarkMode] = useState(true);
@@ -199,10 +201,10 @@ const Settings = ({ onClose }: SettingsProps) => {
                 <p className="text-xs text-foreground font-mono break-all">{license.key}</p>
               </div>
               <button
-                onClick={clearLicense}
-                className="w-full py-3 rounded-2xl border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors"
+                onClick={() => setShowDeactivateConfirm(true)}
+                className="w-full py-3 rounded-2xl border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
               >
-                Deactivate License
+                <LogOut className="w-4 h-4" /> Deactivate License
               </button>
             </>
           ) : (
@@ -212,6 +214,44 @@ const Settings = ({ onClose }: SettingsProps) => {
             </div>
           )}
         </div>
+
+        {/* Deactivation Confirmation Modal */}
+        {showDeactivateConfirm && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Deactivate License?</h3>
+              </div>
+              
+              <p className="text-muted-foreground text-sm mb-6">
+                You will lose access to Voidlarp and your fake balances will be reset. 
+                You can reactivate anytime with a new key from voidlarp.vercel.app.
+              </p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeactivateConfirm(false)}
+                  className="flex-1 py-2.5 px-4 bg-secondary hover:bg-secondary/80 rounded-xl font-medium transition text-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeactivateConfirm(false);
+                    clearLicense();
+                    toast.success('License deactivated');
+                  }}
+                  className="flex-1 py-2.5 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-medium transition"
+                >
+                  Deactivate
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
