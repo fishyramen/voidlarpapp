@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { allCoins } from "@/data/coins";
-import { isExpired, getDaysRemaining } from "@/lib/license";
+import { isExpired, getDaysRemaining, validateLicense } from "@/lib/license";
 
 export interface Token {
   symbol: string;
@@ -58,7 +58,7 @@ interface WalletState {
   setCurrency: (c: string) => void;
   logout: () => void;
   license: StoredLicense | null;
-  setLicenseData: (license: StoredLicense | null) => void;
+  setLicenseData: (license: StoredLicense | null) => { success: boolean; error?: string };
   isLicenseValid: boolean;
   isLicenseExpired: boolean;
   daysUntilExpiry: number | null;
@@ -73,6 +73,35 @@ const defaultTokens: Token[] = allCoins.map(coin => ({
   change: coin.change,
   logo: coin.logo,
 }));
+
+// === LICENSE KEY REUSE PREVENTION ===
+const USED_LICENSES_KEY = 'voidlarp_used_licenses';
+
+function getUsedLicenses(): string[] {
+  try {
+    const raw = localStorage.getItem(USED_LICENSES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveUsedLicenses(keys: string[]): void {
+  localStorage.setItem(USED_LICENSES_KEY, JSON.stringify(keys));
+}
+
+function isLicenseKeyUsed(key: string): boolean {
+  return getUsedLicenses().includes(key);
+}
+
+function markLicenseKeyUsed(key: string): void {
+  const used = getUsedLicenses();
+  if (!used.includes(key)) {
+    used.push(key);
+    saveUsedLicenses(used);
+  }
+}
+// === END LICENSE KEY REUSE PREVENTION ===
 
 function getAccounts(): Record<string, UserAccount> {
   const raw = localStorage.getItem("phantom_accounts");
@@ -128,16 +157,43 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     return raw ? JSON.parse(raw) : null;
   });
 
-  const setLicenseData = (lic: StoredLicense | null) => {
+  const setLicenseData = (lic: StoredLicense | null): { success: boolean; error?: string } => {
+    // If activating a new license, check if key was already used
+    if (lic && lic.key) {
+      // Validate the license format first
+      const validation = validateLicense(lic.key);
+      if (!validation.valid) {
+        return { success: false, error: validation.error || 'Invalid license key' };
+      }
+      
+      // Check if this key has already been activated on this device
+      if (isLicenseKeyUsed(lic.key)) {
+        return { success: false, error: 'This license key has already been activated' };
+      }
+      
+      // Mark this key as used to prevent reuse
+      markLicenseKeyUsed(lic.key);
+    }
+    
+    // Save license data
     setLicenseState(lic);
     if (lic) {
       localStorage.setItem("voidlarp_license", JSON.stringify(lic));
     } else {
       localStorage.removeItem("voidlarp_license");
     }
+    
+    return { success: true };
   };
 
-  const clearLicense = () => setLicenseData(null);
+  const clearLicense = () => {
+    // Optional: Keep the key in used list to prevent re-use after deactivation
+    // If you want to allow re-use after deactivation, uncomment the next line:
+    // if (license) { clearUsedLicenseKey(license.key); }
+    
+    setLicenseState(null);
+    localStorage.removeItem("voidlarp_license");
+  };
 
   const licenseExpired = license ? isExpired(license.expirationDate) : false;
   const isLicenseValid = !!license && !licenseExpired;
