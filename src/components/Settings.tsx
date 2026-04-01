@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, X, Search, ChevronRight, Users, SlidersHorizontal, Shield, Globe, Smile, Layers, Code, HelpCircle, Heart, LogOut, Moon, Sun, Bell, Lock, Key, Eye, Fingerprint, Wifi, WifiOff, ToggleLeft, ToggleRight, CreditCard, AlertTriangle } from "lucide-react";
+import { ArrowLeft, X, Search, ChevronRight, Users, SlidersHorizontal, Shield, Globe, Smile, Layers, Code, HelpCircle, Heart, LogOut, Moon, Sun, Bell, Lock, Key, Eye, Fingerprint, Wifi, WifiOff, ToggleLeft, ToggleRight, CreditCard, AlertTriangle, Check } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import { getPlanLabel } from "@/lib/license";
 import phantomLogo from "@/assets/phantom-logo.png";
@@ -16,6 +16,11 @@ const Settings = ({ onClose }: SettingsProps) => {
   const [view, setView] = useState<SettingsView>("main");
   const [search, setSearch] = useState("");
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+  const [deactivateTerms, setDeactivateTerms] = useState({
+    noRefund: false,
+    balancesReset: false,
+    reactivateNewKey: false,
+  });
   const { currency, setCurrency } = useWallet();
   const [language, setLanguage] = useState("English");
   const [darkMode, setDarkMode] = useState(true);
@@ -215,7 +220,7 @@ const Settings = ({ onClose }: SettingsProps) => {
           )}
         </div>
 
-        {/* Deactivation Confirmation Modal */}
+        {/* Deactivation Confirmation Modal with Terms */}
         {showDeactivateConfirm && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
@@ -226,25 +231,82 @@ const Settings = ({ onClose }: SettingsProps) => {
                 <h3 className="text-lg font-bold text-foreground">Deactivate License?</h3>
               </div>
               
-              <p className="text-muted-foreground text-sm mb-6">
-                You will lose access to Voidlarp and your fake balances will be reset. 
-                You can reactivate anytime with a new key from voidlarp.vercel.app.
+              <p className="text-muted-foreground text-sm mb-4">
+                Please confirm you understand the following before deactivating:
               </p>
               
+              {/* Terms Checkboxes */}
+              <div className="space-y-3 mb-6">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors ${deactivateTerms.noRefund ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
+                    {deactivateTerms.noRefund && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={deactivateTerms.noRefund}
+                    onChange={(e) => setDeactivateTerms(prev => ({ ...prev, noRefund: e.target.checked }))}
+                    className="sr-only"
+                  />
+                  <span className="text-sm text-foreground group-hover:text-primary/90 transition-colors">
+                    I understand that deactivating my license is <strong>non-refundable</strong> and I will not receive a refund for any unused time.
+                  </span>
+                </label>
+                
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors ${deactivateTerms.balancesReset ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
+                    {deactivateTerms.balancesReset && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={deactivateTerms.balancesReset}
+                    onChange={(e) => setDeactivateTerms(prev => ({ ...prev, balancesReset: e.target.checked }))}
+                    className="sr-only"
+                  />
+                  <span className="text-sm text-foreground group-hover:text-primary/90 transition-colors">
+                    I understand that all my <strong>fake balances and transactions will be permanently reset</strong> and cannot be recovered.
+                  </span>
+                </label>
+                
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors ${deactivateTerms.reactivateNewKey ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
+                    {deactivateTerms.reactivateNewKey && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={deactivateTerms.reactivateNewKey}
+                    onChange={(e) => setDeactivateTerms(prev => ({ ...prev, reactivateNewKey: e.target.checked }))}
+                    className="sr-only"
+                  />
+                  <span className="text-sm text-foreground group-hover:text-primary/90 transition-colors">
+                    I understand that to use Voidlarp again, I will need to <strong>purchase and enter a new license key</strong>.
+                  </span>
+                </label>
+              </div>
+              
+              {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowDeactivateConfirm(false)}
+                  onClick={() => {
+                    setShowDeactivateConfirm(false);
+                    setDeactivateTerms({ noRefund: false, balancesReset: false, reactivateNewKey: false });
+                  }}
                   className="flex-1 py-2.5 px-4 bg-secondary hover:bg-secondary/80 rounded-xl font-medium transition text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => {
+                    if (!deactivateTerms.noRefund || !deactivateTerms.balancesReset || !deactivateTerms.reactivateNewKey) {
+                      toast.error('Please confirm all terms before deactivating');
+                      return;
+                    }
                     setShowDeactivateConfirm(false);
+                    setDeactivateTerms({ noRefund: false, balancesReset: false, reactivateNewKey: false });
                     clearLicense();
                     toast.success('License deactivated');
                   }}
-                  className="flex-1 py-2.5 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-medium transition"
+                  disabled={!deactivateTerms.noRefund || !deactivateTerms.balancesReset || !deactivateTerms.reactivateNewKey}
+                  className="flex-1 py-2.5 px-4 bg-destructive hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed text-destructive-foreground rounded-xl font-medium transition"
                 >
                   Deactivate
                 </button>
