@@ -142,13 +142,13 @@ const Index = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      {/* FIXED: Increased height from h-[780px] to h-[820px] to prevent scrolling */}
-      <div className="w-full max-w-[400px] h-[820px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
-        {renderContent()}
-      </div>
+  <div className="flex items-center justify-center min-h-screen bg-background p-0 sm:p-4">
+    {/* Mobile-first: Full screen on phones, constrained on desktop */}
+    <div className="w-full h-screen sm:h-[850px] sm:max-w-[400px] sm:rounded-3xl sm:border sm:border-border bg-background sm:shadow-2xl flex flex-col relative overflow-hidden">
+      {renderContent()}
     </div>
-  );
+  </div>
+);
 };
 
 export default Index;
