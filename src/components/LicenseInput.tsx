@@ -3,9 +3,10 @@ import { motion } from "framer-motion";
 import { Key, Loader2, ExternalLink } from "lucide-react";
 import { validateLicense } from "@/lib/license";
 import voidlarpLogo from "@/assets/voidlarp-logo.jpg";
+import { toast } from "sonner";
 
 interface LicenseInputProps {
-  onActivate: (data: { key: string; planType: '7days' | '1month' | 'lifetime'; activationDate: string; expirationDate: string | null }) => void;
+  onActivate: ( { key: string; planType: '7days' | '1month' | 'lifetime'; activationDate: string; expirationDate: string | null }) => void;
 }
 
 const LicenseInput = ({ onActivate }: LicenseInputProps) => {
@@ -14,29 +15,45 @@ const LicenseInput = ({ onActivate }: LicenseInputProps) => {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!key.trim()) { setError("Enter a license key"); return; }
+    if (!key.trim()) {
+      setError("Please enter a license key");
+      return;
+    }
+    
     setLoading(true);
     setError("");
     
-    const result = await validateLicense(key);
-    setLoading(false);
-    
-    if (!result.valid) {
-      setError(result.error || "Invalid license");
-      return;
-    }
+    try {
+      const result = await validateLicense(key);
+      
+      if (!result.valid) {
+        setError(result.error || "Invalid license key");
+        toast.error(result.error || "Invalid license");
+        setLoading(false);
+        return;
+      }
 
-    onActivate({
-      key: key.trim().toUpperCase(),
-      planType: result.planType!,
-      activationDate: result.activationDate!,
-      expirationDate: result.expirationDate ?? null,
-    });
+      // Pass validated data to parent
+      onActivate({
+        key: key.trim().toUpperCase(),
+        planType: result.planType!,
+        activationDate: result.activationDate!,
+        expirationDate: result.expirationDate ?? null,
+      });
+      
+      toast.success('License activated!');
+    } catch (err) {
+      setError("Failed to activate license");
+      toast.error("Failed to activate license");
+      console.error('Activation error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-[400px] h-[780px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
+      <div className="w-full max-w-[400px] h-screen sm:h-[850px] sm:max-w-[400px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -77,8 +94,9 @@ const LicenseInput = ({ onActivate }: LicenseInputProps) => {
               value={key}
               onChange={(e) => { setKey(e.target.value.toUpperCase()); setError(""); }}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              placeholder="VOID-XXXX-XXXXXXXXXX-XXXXXXXX"
+              placeholder="Enter your license key"
               className="w-full py-3.5 pl-10 pr-4 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground/50 text-sm font-mono tracking-wide focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary"
+              disabled={loading}
             />
           </div>
 
@@ -90,19 +108,13 @@ const LicenseInput = ({ onActivate }: LicenseInputProps) => {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Validating...
+                Activating...
               </>
             ) : (
               "Activate License"
             )}
           </button>
         </motion.div>
-
-        <div className="px-8 pb-8">
-          <p className="text-[10px] text-muted-foreground/50 text-center">
-            Format: VOID-PLAN-TIMESTAMP-CHECKSUM
-          </p>
-        </div>
       </div>
     </div>
   );
