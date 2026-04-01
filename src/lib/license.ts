@@ -79,15 +79,15 @@ export async function validateLicense(key: string): Promise<LicenseResult> {
   }
 
   // Calculate expiration
-  const activationDate = new Date().toISOString();
+  const activationDate = new Date(timestamp * 1000).toISOString();
   let expirationDate: string | null = null;
   
   if (planType === '7days') {
-    const exp = new Date();
+    const exp = new Date(timestamp * 1000);
     exp.setDate(exp.getDate() + 7);
     expirationDate = exp.toISOString();
   } else if (planType === '1month') {
-    const exp = new Date();
+    const exp = new Date(timestamp * 1000);
     exp.setMonth(exp.getMonth() + 1);
     expirationDate = exp.toISOString();
   }
@@ -119,3 +119,39 @@ export function getPlanLabel(planType: string): string {
     default: return planType;
   }
 }
+
+// === LICENSE KEY REUSE PREVENTION ===
+const USED_LICENSES_KEY = 'voidlarp_used_licenses';
+
+export function getUsedLicenses(): string[] {
+  try {
+    const raw = localStorage.getItem(USED_LICENSES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveUsedLicenses(keys: string[]): void {
+  localStorage.setItem(USED_LICENSES_KEY, JSON.stringify(keys));
+}
+
+export function isLicenseKeyUsed(key: string): boolean {
+  return getUsedLicenses().includes(key.toUpperCase());
+}
+
+export function markLicenseKeyUsed(key: string): void {
+  const used = getUsedLicenses();
+  const normalizedKey = key.toUpperCase();
+  if (!used.includes(normalizedKey)) {
+    used.push(normalizedKey);
+    saveUsedLicenses(used);
+  }
+}
+
+export function clearUsedLicenseKey(key: string): void {
+  const used = getUsedLicenses();
+  const filtered = used.filter(k => k !== key.toUpperCase());
+  saveUsedLicenses(filtered);
+}
+// === END LICENSE KEY REUSE PREVENTION ===
