@@ -143,7 +143,8 @@ const Index = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-[400px] h-[780px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
+      {/* FIXED: Increased height from h-[780px] to h-[820px] to prevent scrolling */}
+      <div className="w-full max-w-[400px] h-[820px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
         {renderContent()}
       </div>
     </div>
