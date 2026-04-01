@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@/context/WalletContext";
 import { signUp, signIn } from "@/context/WalletContext";
-import phantomLogo from "@/assets/phantom-logo.png";
+import voidlarpLogo from "@/assets/voidlarp-logo.jpg";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 const Onboarding = () => {
@@ -39,9 +39,7 @@ const Onboarding = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-[400px] h-[780px] rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative"
-        style={{ background: "linear-gradient(180deg, hsl(263, 50%, 18%) 0%, hsl(240, 10%, 6%) 50%)" }}
-      >
+      <div className="w-full max-w-[400px] h-screen sm:h-[850px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
         <AnimatePresence mode="wait">
           {step === 0 && (
             <motion.div
@@ -52,46 +50,43 @@ const Onboarding = () => {
               className="flex-1 flex flex-col"
             >
               <div className="flex-1 flex flex-col items-center justify-center px-8">
+                {/* Logo - Simple fade in, no complex animation */}
                 <motion.img
-                  src={phantomLogo}
-                  alt="Phantom"
-                  className="w-24 h-24 rounded-3xl mb-8"
-                  initial={{ scale: 0.5, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                  src={voidlarpLogo}
+                  alt="Voidlarp"
+                  className="w-20 h-20 rounded-2xl mb-6 object-cover"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4 }}
                 />
+                
+                {/* Title - Voidlarp, no description */}
                 <motion.h1
-                  className="text-3xl font-bold text-foreground tracking-tight mb-2"
+                  className="text-3xl font-bold text-foreground tracking-tight"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
                 >
-                  Phantom
+                  Voidlarp
                 </motion.h1>
-                <motion.p
-                  className="text-muted-foreground text-sm text-center leading-relaxed max-w-[260px]"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.45 }}
-                >
-                  A friendly crypto wallet built for DeFi & NFTs
-                </motion.p>
               </div>
+              
+              {/* Buttons - Simple fade in */}
               <motion.div
                 className="p-6 space-y-3"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
               >
                 <button
                   onClick={() => switchMode(1)}
-                  className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm"
+                  className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
                 >
                   Create a new wallet
                 </button>
                 <button
                   onClick={() => switchMode(2)}
-                  className="w-full py-3.5 rounded-2xl bg-secondary/80 text-foreground font-semibold text-sm hover:bg-secondary transition-colors"
+                  className="w-full py-3.5 rounded-2xl bg-secondary text-foreground font-semibold text-sm hover:bg-secondary/80 transition-colors"
                 >
                   I already have a wallet
                 </button>
@@ -106,14 +101,14 @@ const Onboarding = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col p-6"
-              style={{ background: "hsl(240, 6%, 10%)" }}
             >
               <button
                 onClick={() => switchMode(0)}
-                className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground mb-8"
+                className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground mb-8 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
+              
               <h2 className="text-2xl font-bold text-foreground mb-2">
                 {step === 1 ? "Create your wallet" : "Welcome back"}
               </h2>
@@ -122,7 +117,7 @@ const Onboarding = () => {
               </p>
 
               {error && (
-                <div className="bg-destructive/15 text-destructive text-xs font-medium px-3 py-2 rounded-lg mb-4">
+                <div className="bg-destructive/15 text-destructive text-xs font-medium px-3 py-2.5 rounded-xl mb-4 text-center">
                   {error}
                 </div>
               )}
@@ -135,7 +130,7 @@ const Onboarding = () => {
                 placeholder="@username"
                 maxLength={20}
                 autoFocus
-                className="w-full py-3.5 px-4 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary mb-4"
+                className="w-full py-3.5 px-4 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground/50 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary mb-4"
               />
 
               <label className="text-xs font-medium text-muted-foreground mb-2 block">PASSWORD</label>
@@ -146,12 +141,12 @@ const Onboarding = () => {
                   onChange={(e) => { setPassword(e.target.value); setError(""); }}
                   onKeyDown={(e) => e.key === "Enter" && (step === 1 ? handleSignUp() : handleLogin())}
                   placeholder="••••••••"
-                  className="w-full py-3.5 px-4 pr-12 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary"
+                  className="w-full py-3.5 px-4 pr-12 rounded-xl bg-secondary text-foreground placeholder:text-muted-foreground/50 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary border border-transparent focus:border-primary"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -162,7 +157,7 @@ const Onboarding = () => {
               <button
                 onClick={step === 1 ? handleSignUp : handleLogin}
                 disabled={!name.trim() || !password}
-                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-30 transition-opacity"
+                className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm disabled:opacity-30 hover:opacity-90 transition-opacity"
               >
                 {step === 1 ? "Create Wallet" : "Log In"}
               </button>
