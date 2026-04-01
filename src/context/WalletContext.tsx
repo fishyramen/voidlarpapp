@@ -2,13 +2,12 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { allCoins } from "@/data/coins";
 import { 
   isExpired, 
-  getDaysRemaining, 
-  validateLicense,
+  getDaysRemaining,
   isLicenseKeyUsed,
   markLicenseKeyUsed,
   clearUsedLicenseKey,
 } from "@/lib/license";
-import { toast } from "sonner"; // Make sure this is imported
+import { toast } from "sonner";
 
 export interface Token {
   symbol: string;
@@ -66,7 +65,7 @@ interface WalletState {
   setCurrency: (c: string) => void;
   logout: () => void;
   license: StoredLicense | null;
-  setLicenseData: (license: StoredLicense | null) => void; // Returns void now!
+  setLicenseData: (license: StoredLicense | null) => void;
   isLicenseValid: boolean;
   isLicenseExpired: boolean;
   daysUntilExpiry: number | null;
@@ -136,37 +135,27 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     return raw ? JSON.parse(raw) : null;
   });
 
-  // FIXED: setLicenseData now handles errors internally and returns void
+  // FIXED: Synchronous setLicenseData - validation already done in LicenseInput
   const setLicenseData = (lic: StoredLicense | null): void => {
     if (lic && lic.key) {
-      // Validate the license format first
-      validateLicense(lic.key).then(validation => {
-        if (!validation.valid) {
-          toast.error(validation.error || 'Invalid license key');
-          return;
-        }
-        
-        // Check if this key has already been activated
-        if (isLicenseKeyUsed(lic.key)) {
-          toast.error('This license key has already been activated');
-          return;
-        }
-        
-        // Mark this key as used to prevent reuse
-        markLicenseKeyUsed(lic.key);
-        
-        // Save license data
-        setLicenseState(lic);
-        localStorage.setItem("voidlarp_license", JSON.stringify(lic));
-        toast.success('License activated successfully!');
-      }).catch(err => {
-        console.error('License validation error:', err);
-        toast.error('Failed to validate license');
-      });
+      // Check if this key has already been activated (sync check)
+      if (isLicenseKeyUsed(lic.key)) {
+        toast.error('This license key has already been activated');
+        return;
+      }
+      
+      // Mark this key as used to prevent reuse
+      markLicenseKeyUsed(lic.key);
+      
+      // Save license data
+      setLicenseState(lic);
+      localStorage.setItem("voidlarp_license", JSON.stringify(lic));
+      toast.success('License activated successfully!');
     } else {
       // Deactivating license
       setLicenseState(null);
       localStorage.removeItem("voidlarp_license");
+      toast.success('License deactivated');
     }
   };
 
@@ -177,7 +166,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     
     setLicenseState(null);
     localStorage.removeItem("voidlarp_license");
-    toast.success('License deactivated');
   };
 
   const licenseExpired = license ? isExpired(license.expirationDate) : false;
