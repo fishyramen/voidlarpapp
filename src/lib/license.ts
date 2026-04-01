@@ -1,6 +1,5 @@
 // Client-side license validation for Voidlarp
 // Format: VOID-{planCode}-{timestamp}-{checksum}
-// planCode: XK9M = 7days, PJ2N = 1month, RV8T = lifetime
 
 const PLAN_MAP: Record<string, '7days' | '1month' | 'lifetime'> = {
   'XK9M': '7days',
@@ -39,74 +38,77 @@ export interface LicenseResult {
 }
 
 export async function validateLicense(key: string): Promise<LicenseResult> {
-  const trimmed = key.trim().toUpperCase();
-  
-  // Check structure: VOID-XXXX-TIMESTAMP-CHECKSUM
-  const parts = trimmed.split('-');
-  if (parts.length !== 4 || parts[0] !== 'VOID') {
-    return { valid: false, error: 'Invalid license format' };
+  try {
+    const trimmed = key.trim().toUpperCase();
+    const parts = trimmed.split('-');
+    
+    if (parts.length !== 4 || parts[0] !== 'VOID') {
+      return { valid: false, error: 'Invalid license format' };
+    }
+
+    const [, planCode, timestampStr, checksum] = parts;
+    const planType = PLAN_MAP[planCode];
+    
+    if (!planType) {
+      return { valid: false, error: 'Invalid plan code' };
+    }
+
+    const timestamp = parseInt(timestampStr, 10);
+    if (isNaN(timestamp)) {
+      return { valid: false, error: 'Invalid timestamp' };
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const oneYear = 365 * 24 * 60 * 60;
+    
+    if (Math.abs(now - timestamp) > oneYear) {
+      return { valid: false, error: 'License key expired or not yet valid' };
+    }
+
+    const payload = `VOID-${planCode}-${timestampStr}`;
+    const secret = getSecret();
+    const obfuscatedSecret = xorObfuscate(secret);
+    const expectedHash = await sha256(payload + obfuscatedSecret);
+    const expectedChecksum = expectedHash.substring(0, 8).toUpperCase();
+
+    if (checksum.toUpperCase() !== expectedChecksum) {
+      return { valid: false, error: 'Invalid checksum' };
+    }
+
+    // Calculate dates based on the timestamp in the key (not current time)
+    const activationDate = new Date(timestamp * 1000).toISOString();
+    let expirationDate: string | null = null;
+    
+    if (planType === '7days') {
+      const exp = new Date(timestamp * 1000);
+      exp.setDate(exp.getDate() + 7);
+      expirationDate = exp.toISOString();
+    } else if (planType === '1month') {
+      const exp = new Date(timestamp * 1000);
+      exp.setMonth(exp.getMonth() + 1);
+      expirationDate = exp.toISOString();
+    }
+    // lifetime: expirationDate stays null
+
+    return {
+      valid: true,
+      planType,
+      activationDate,
+      expirationDate,
+    };
+  } catch (err) {
+    console.error('License validation error:', err);
+    return { valid: false, error: 'Failed to validate license' };
   }
-
-  const [, planCode, timestampStr, checksum] = parts;
-
-  // Decode plan
-  const planType = PLAN_MAP[planCode];
-  if (!planType) {
-    return { valid: false, error: 'Invalid plan code' };
-  }
-
-  // Validate timestamp (Unix seconds, within ±1 year)
-  const timestamp = parseInt(timestampStr, 10);
-  if (isNaN(timestamp)) {
-    return { valid: false, error: 'Invalid timestamp' };
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const oneYear = 365 * 24 * 60 * 60;
-  if (Math.abs(now - timestamp) > oneYear) {
-    return { valid: false, error: 'License key expired or not yet valid' };
-  }
-
-  // Recompute checksum
-  const payload = `VOID-${planCode}-${timestampStr}`;
-  const secret = getSecret();
-  const obfuscatedSecret = xorObfuscate(secret);
-  const expectedHash = await sha256(payload + obfuscatedSecret);
-  const expectedChecksum = expectedHash.substring(0, 8).toUpperCase();
-
-  if (checksum !== expectedChecksum) {
-    return { valid: false, error: 'Invalid checksum' };
-  }
-
-  // Calculate expiration
-  const activationDate = new Date(timestamp * 1000).toISOString();
-  let expirationDate: string | null = null;
-  
-  if (planType === '7days') {
-    const exp = new Date(timestamp * 1000);
-    exp.setDate(exp.getDate() + 7);
-    expirationDate = exp.toISOString();
-  } else if (planType === '1month') {
-    const exp = new Date(timestamp * 1000);
-    exp.setMonth(exp.getMonth() + 1);
-    expirationDate = exp.toISOString();
-  }
-
-  return {
-    valid: true,
-    planType,
-    activationDate,
-    expirationDate,
-  };
 }
 
 export function isExpired(expirationDate: string | null): boolean {
-  if (!expirationDate) return false; // lifetime
+  if (!expirationDate) return false;
   return new Date() > new Date(expirationDate);
 }
 
 export function getDaysRemaining(expirationDate: string | null): number | null {
-  if (!expirationDate) return null; // lifetime = infinite
+  if (!expirationDate) return null;
   const diff = new Date(expirationDate).getTime() - Date.now();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
@@ -123,35 +125,39 @@ export function getPlanLabel(planType: string): string {
 // === LICENSE KEY REUSE PREVENTION ===
 const USED_LICENSES_KEY = 'voidlarp_used_licenses';
 
-export function getUsedLicenses(): string[] {
+export function isLicenseKeyUsed(key: string): boolean {
   try {
     const raw = localStorage.getItem(USED_LICENSES_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const used = raw ? JSON.parse(raw) : [];
+    const normalized = key.trim().toUpperCase();
+    return used.some((k: string) => k.trim().toUpperCase() === normalized);
   } catch {
-    return [];
+    return false;
   }
 }
 
-export function saveUsedLicenses(keys: string[]): void {
-  localStorage.setItem(USED_LICENSES_KEY, JSON.stringify(keys));
-}
-
-export function isLicenseKeyUsed(key: string): boolean {
-  return getUsedLicenses().includes(key.toUpperCase());
-}
-
 export function markLicenseKeyUsed(key: string): void {
-  const used = getUsedLicenses();
-  const normalizedKey = key.toUpperCase();
-  if (!used.includes(normalizedKey)) {
-    used.push(normalizedKey);
-    saveUsedLicenses(used);
+  try {
+    const raw = localStorage.getItem(USED_LICENSES_KEY);
+    const used = raw ? JSON.parse(raw) : [];
+    const normalized = key.trim().toUpperCase();
+    if (!used.includes(normalized)) {
+      used.push(normalized);
+      localStorage.setItem(USED_LICENSES_KEY, JSON.stringify(used));
+    }
+  } catch {
+    // Fail silently - don't block activation if storage fails
   }
 }
 
 export function clearUsedLicenseKey(key: string): void {
-  const used = getUsedLicenses();
-  const filtered = used.filter(k => k !== key.toUpperCase());
-  saveUsedLicenses(filtered);
+  try {
+    const raw = localStorage.getItem(USED_LICENSES_KEY);
+    const used = raw ? JSON.parse(raw) : [];
+    const normalized = key.trim().toUpperCase();
+    const filtered = used.filter((k: string) => k.trim().toUpperCase() !== normalized);
+    localStorage.setItem(USED_LICENSES_KEY, JSON.stringify(filtered));
+  } catch {
+    // Fail silently
+  }
 }
-// === END LICENSE KEY REUSE PREVENTION ===
