@@ -1,32 +1,27 @@
 import { useState } from "react";
-import { ArrowLeft, X, Search, ChevronRight, Users, SlidersHorizontal, Shield, Globe, Smile, Layers, Code, HelpCircle, Heart, LogOut, Moon, Sun, Bell, Lock, Key, Eye, Fingerprint, Wifi, WifiOff, ToggleLeft, ToggleRight } from "lucide-react";
+import { ArrowLeft, X, Search, ChevronRight, Users, SlidersHorizontal, Shield, Globe, Smile, Layers, Code, HelpCircle, Heart, LogOut, Moon, Sun, Bell, Lock, Key, Eye, Fingerprint, Wifi, WifiOff, ToggleLeft, ToggleRight, CreditCard } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
+import { getPlanLabel } from "@/lib/license";
 import phantomLogo from "@/assets/phantom-logo.png";
 
 interface SettingsProps {
   onClose: () => void;
 }
 
-type SettingsView = "main" | "preferences" | "security" | "networks" | "addressBook" | "connectedApps" | "developer";
+type SettingsView = "main" | "preferences" | "security" | "networks" | "addressBook" | "connectedApps" | "developer" | "license";
 
 const Settings = ({ onClose }: SettingsProps) => {
-  const { username, logout } = useWallet();
+  const { username, logout, license, daysUntilExpiry, clearLicense } = useWallet();
   const [view, setView] = useState<SettingsView>("main");
   const [search, setSearch] = useState("");
-
   const { currency, setCurrency } = useWallet();
-  // Preferences state
   const [language, setLanguage] = useState("English");
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
   const [hideSmallBalances, setHideSmallBalances] = useState(false);
-
-  // Security state
   const [autoLock, setAutoLock] = useState("5 minutes");
   const [biometrics, setBiometrics] = useState(false);
   const [txConfirmation, setTxConfirmation] = useState(true);
-
-  // Networks state
   const [networks, setNetworks] = useState([
     { name: "Solana", enabled: true },
     { name: "Ethereum", enabled: true },
@@ -40,18 +35,19 @@ const Settings = ({ onClose }: SettingsProps) => {
   const toggleNetwork = (idx: number) => {
     setNetworks(prev => prev.map((n, i) => i === idx ? { ...n, enabled: !n.enabled } : n));
   };
-
   const enabledCount = networks.filter(n => n.enabled).length;
+
+  const SubHeader = ({ title, onBack }: { title: string; onBack: () => void }) => (
+    <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+      <button onClick={onBack} className="text-muted-foreground hover:text-foreground"><ArrowLeft className="w-5 h-5" /></button>
+      <h1 className="text-lg font-bold text-foreground">{title}</h1>
+    </div>
+  );
 
   if (view === "preferences") {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Preferences</h1>
-        </div>
+        <SubHeader title="Preferences" onBack={() => setView("main")} />
         <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-6">
           <SettingToggle label="Dark Mode" icon={darkMode ? <Moon className="w-5 h-5 text-primary" /> : <Sun className="w-5 h-5 text-primary" />} enabled={darkMode} onToggle={() => setDarkMode(!darkMode)} />
           <SettingToggle label="Notifications" icon={<Bell className="w-5 h-5 text-primary" />} enabled={notifications} onToggle={() => setNotifications(!notifications)} />
@@ -66,12 +62,7 @@ const Settings = ({ onClose }: SettingsProps) => {
   if (view === "security") {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Security & Privacy</h1>
-        </div>
+        <SubHeader title="Security & Privacy" onBack={() => setView("main")} />
         <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-6">
           <SettingToggle label="Biometric Unlock" icon={<Fingerprint className="w-5 h-5 text-primary" />} enabled={biometrics} onToggle={() => setBiometrics(!biometrics)} />
           <SettingToggle label="Transaction Confirmation" icon={<Lock className="w-5 h-5 text-primary" />} enabled={txConfirmation} onToggle={() => setTxConfirmation(!txConfirmation)} />
@@ -98,12 +89,7 @@ const Settings = ({ onClose }: SettingsProps) => {
   if (view === "networks") {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Active Networks</h1>
-        </div>
+        <SubHeader title="Active Networks" onBack={() => setView("main")} />
         <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-6">
           {networks.map((net, idx) => (
             <div key={net.name} className="bg-secondary rounded-2xl p-4 flex items-center justify-between">
@@ -112,10 +98,7 @@ const Settings = ({ onClose }: SettingsProps) => {
                 <span className="text-sm font-medium text-foreground">{net.name}</span>
               </div>
               <button onClick={() => toggleNetwork(idx)}>
-                {net.enabled
-                  ? <ToggleRight className="w-6 h-6 text-primary" />
-                  : <ToggleLeft className="w-6 h-6 text-muted-foreground" />
-                }
+                {net.enabled ? <ToggleRight className="w-6 h-6 text-primary" /> : <ToggleLeft className="w-6 h-6 text-muted-foreground" />}
               </button>
             </div>
           ))}
@@ -127,15 +110,10 @@ const Settings = ({ onClose }: SettingsProps) => {
   if (view === "addressBook") {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Address Book</h1>
-        </div>
+        <SubHeader title="Address Book" onBack={() => setView("main")} />
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <Smile className="w-10 h-10 text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground text-center">No saved addresses yet. Addresses you transact with will appear here.</p>
+          <p className="text-sm text-muted-foreground text-center">No saved addresses yet.</p>
         </div>
       </div>
     );
@@ -144,15 +122,10 @@ const Settings = ({ onClose }: SettingsProps) => {
   if (view === "connectedApps") {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Connected Apps</h1>
-        </div>
+        <SubHeader title="Connected Apps" onBack={() => setView("main")} />
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <Layers className="w-10 h-10 text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground text-center">No connected apps. Apps you connect to will appear here.</p>
+          <p className="text-sm text-muted-foreground text-center">No connected apps.</p>
         </div>
       </div>
     );
@@ -161,12 +134,7 @@ const Settings = ({ onClose }: SettingsProps) => {
   if (view === "developer") {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-          <button onClick={() => setView("main")} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-bold text-foreground">Developer Settings</h1>
-        </div>
+        <SubHeader title="Developer Settings" onBack={() => setView("main")} />
         <div className="flex-1 overflow-y-auto px-4 space-y-2 pb-6">
           <div className="bg-secondary rounded-2xl p-4">
             <p className="text-sm font-medium text-foreground mb-1">Testnet Mode</p>
@@ -178,8 +146,71 @@ const Settings = ({ onClose }: SettingsProps) => {
           </div>
           <div className="bg-secondary rounded-2xl p-4">
             <p className="text-sm font-medium text-foreground mb-1">Version</p>
-            <p className="text-xs text-muted-foreground">Phantom v24.12.0</p>
+            <p className="text-xs text-muted-foreground">Voidlarp v1.0.0</p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "license") {
+    return (
+      <div className="flex flex-col h-full">
+        <SubHeader title="License" onBack={() => setView("main")} />
+        <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-6">
+          {license ? (
+            <>
+              <div className="bg-secondary rounded-2xl p-4 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Plan</span>
+                  <span className="text-foreground font-semibold">{getPlanLabel(license.planType)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Status</span>
+                  <span className="text-success font-medium">Active</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Activated</span>
+                  <span className="text-foreground">{new Date(license.activationDate).toLocaleDateString()}</span>
+                </div>
+                {license.expirationDate && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Expires</span>
+                    <span className="text-foreground">{new Date(license.expirationDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+                {daysUntilExpiry !== null && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Days Remaining</span>
+                    <span className={`font-semibold ${daysUntilExpiry <= 3 ? "text-warning" : "text-success"}`}>
+                      {daysUntilExpiry}
+                    </span>
+                  </div>
+                )}
+                {daysUntilExpiry === null && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Duration</span>
+                    <span className="text-success font-semibold">∞ Forever</span>
+                  </div>
+                )}
+              </div>
+              <div className="bg-secondary rounded-2xl p-4">
+                <p className="text-xs text-muted-foreground mb-1">License Key</p>
+                <p className="text-xs text-foreground font-mono break-all">{license.key}</p>
+              </div>
+              <button
+                onClick={clearLicense}
+                className="w-full py-3 rounded-2xl border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors"
+              >
+                Deactivate License
+              </button>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12">
+              <CreditCard className="w-10 h-10 text-muted-foreground mb-3" />
+              <p className="text-sm text-muted-foreground">No active license</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -203,6 +234,7 @@ const Settings = ({ onClose }: SettingsProps) => {
     },
     {
       items: [
+        { icon: <CreditCard className="w-5 h-5 text-primary" />, label: "License", badge: license ? getPlanLabel(license.planType) : "None", onClick: () => setView("license") },
         { icon: <Code className="w-5 h-5 text-primary" />, label: "Developer Settings", onClick: () => setView("developer") },
       ],
     },
@@ -215,11 +247,7 @@ const Settings = ({ onClose }: SettingsProps) => {
   ];
 
   const filteredSections = search
-    ? [{
-        items: menuSections
-          .flatMap(s => s.items)
-          .filter(i => i.label.toLowerCase().includes(search.toLowerCase())),
-      }]
+    ? [{ items: menuSections.flatMap(s => s.items).filter(i => i.label.toLowerCase().includes(search.toLowerCase())) }]
     : menuSections;
 
   return (
@@ -231,21 +259,14 @@ const Settings = ({ onClose }: SettingsProps) => {
         </button>
       </div>
 
-      {/* Search */}
       <div className="px-4 pb-3">
         <div className="flex items-center gap-2 bg-secondary rounded-xl px-3 py-2.5">
           <Search className="w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none flex-1"
-          />
+          <input type="text" placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)}
+            className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none flex-1" />
         </div>
       </div>
 
-      {/* Account card */}
       <div className="px-4 pb-3">
         <div className="bg-secondary rounded-2xl p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden">
@@ -256,31 +277,23 @@ const Settings = ({ onClose }: SettingsProps) => {
         </div>
       </div>
 
-      {/* Menu sections */}
       <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-6">
         {filteredSections.map((section, si) => (
           <div key={si} className="bg-secondary rounded-2xl overflow-hidden divide-y divide-border">
             {section.items.map((item, ii) => (
-              <button
-                key={ii}
-                onClick={item.onClick}
-                className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors"
-              >
+              <button key={ii} onClick={item.onClick}
+                className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors">
                 {item.icon}
                 <span className="text-sm font-medium text-foreground flex-1 text-left">{item.label}</span>
-                {item.badge && (
-                  <span className="text-xs text-muted-foreground mr-1">{item.badge}</span>
-                )}
+                {item.badge && <span className="text-xs text-muted-foreground mr-1">{item.badge}</span>}
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </button>
             ))}
           </div>
         ))}
 
-        <button
-          onClick={logout}
-          className="w-full py-3.5 rounded-2xl border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
-        >
+        <button onClick={logout}
+          className="w-full py-3.5 rounded-2xl border border-destructive/30 text-destructive text-sm font-medium hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2">
           <LogOut className="w-4 h-4" /> Log Out
         </button>
       </div>
@@ -288,7 +301,6 @@ const Settings = ({ onClose }: SettingsProps) => {
   );
 };
 
-// Helper components
 const SettingToggle = ({ label, icon, enabled, onToggle }: { label: string; icon: React.ReactNode; enabled: boolean; onToggle: () => void }) => (
   <div className="bg-secondary rounded-2xl p-4 flex items-center justify-between">
     <div className="flex items-center gap-3">
@@ -296,10 +308,7 @@ const SettingToggle = ({ label, icon, enabled, onToggle }: { label: string; icon
       <span className="text-sm font-medium text-foreground">{label}</span>
     </div>
     <button onClick={onToggle}>
-      {enabled
-        ? <ToggleRight className="w-6 h-6 text-primary" />
-        : <ToggleLeft className="w-6 h-6 text-muted-foreground" />
-      }
+      {enabled ? <ToggleRight className="w-6 h-6 text-primary" /> : <ToggleLeft className="w-6 h-6 text-muted-foreground" />}
     </button>
   </div>
 );
@@ -315,11 +324,8 @@ const SettingSelect = ({ label, value, options, onChange }: { label: string; val
       {open && (
         <div className="mt-3 space-y-1">
           {options.map(opt => (
-            <button
-              key={opt}
-              onClick={() => { onChange(opt); setOpen(false); }}
-              className={`w-full text-left py-2 px-3 rounded-xl text-sm transition-colors ${opt === value ? "bg-primary/20 text-primary font-medium" : "text-foreground hover:bg-muted"}`}
-            >
+            <button key={opt} onClick={() => { onChange(opt); setOpen(false); }}
+              className={`w-full text-left py-2 px-3 rounded-xl text-sm transition-colors ${opt === value ? "bg-primary/20 text-primary font-medium" : "text-foreground hover:bg-muted"}`}>
               {opt}
             </button>
           ))}

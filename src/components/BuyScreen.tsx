@@ -4,11 +4,9 @@ import { useWallet } from "@/context/WalletContext";
 import { allCoins } from "@/data/coins";
 
 const BuyScreen = () => {
-  const { setActiveTab, setExploreBuySymbol } = useWallet();
+  const { setActiveTab, setExploreBuySymbol, tokens, setTokens, addTransaction } = useWallet();
   const [search, setSearch] = useState("");
   const [amounts, setAmounts] = useState<Record<string, string>>({});
-  const [success, setSuccess] = useState(false);
-  const { tokens, setTokens, addTransaction } = useWallet();
 
   const filtered = allCoins.filter(
     c => c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -54,28 +52,8 @@ const BuyScreen = () => {
       addTransaction({ type: "buy", toToken: symbol, amount: tokenAmount, value: usdAmount });
     });
 
-    setSuccess(true);
-    setTimeout(() => {
-      setActiveTab("wallet");
-      setSuccess(false);
-      setExploreBuySymbol("");
-      setAmounts({});
-    }, 1500);
+    // DON'T clear amounts - keep them editable so users can buy again
   };
-
-  if (success) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mb-4">
-          <span className="text-success text-2xl">✓</span>
-        </div>
-        <p className="text-foreground font-semibold text-lg">Purchase Complete!</p>
-        <p className="text-muted-foreground text-sm mt-1">
-          ${totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })} total
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -99,6 +77,8 @@ const BuyScreen = () => {
           const usdVal = amounts[coin.symbol] || "";
           const parsedAmount = parseFloat(usdVal) || 0;
           const tokenAmount = parsedAmount > 0 ? parsedAmount / coin.price : 0;
+          const held = tokens.find(t => t.symbol === coin.symbol);
+          const currentBalance = held?.balance || 0;
 
           return (
             <div key={coin.symbol} className="mb-2 rounded-2xl bg-secondary p-3">
@@ -113,9 +93,16 @@ const BuyScreen = () => {
                     <p className="text-xs text-muted-foreground">{formatPrice(coin.price)}</p>
                   </div>
                 </div>
-                <p className={`text-xs font-medium ${coin.change >= 0 ? "text-success" : "text-destructive"}`}>
-                  {coin.change >= 0 ? "+" : ""}{coin.change.toFixed(2)}%
-                </p>
+                <div className="text-right">
+                  <p className={`text-xs font-medium ${coin.change >= 0 ? "text-success" : "text-destructive"}`}>
+                    {coin.change >= 0 ? "+" : ""}{coin.change.toFixed(2)}%
+                  </p>
+                  {currentBalance > 0 && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Owned: {currentBalance.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="mt-2 flex items-center gap-2">
                 <div className="relative flex-1">

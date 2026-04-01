@@ -35,7 +35,7 @@ const TokenDetail = ({ symbol, onClose }: TokenDetailProps) => {
     ));
     addTransaction({ type: "buy", toToken: symbol, amount: tokenAmount, value: parsedAmount });
     setSuccess(`Bought ${tokenAmount.toFixed(6)} ${symbol}`);
-    setAmount("");
+    // Keep amount in the input — don't clear it
     setTimeout(() => setSuccess(""), 2000);
     setMode("info");
   };
@@ -45,7 +45,6 @@ const TokenDetail = ({ symbol, onClose }: TokenDetailProps) => {
     const tokenAmount = parsedAmount / coin.price;
     sellToken(symbol, tokenAmount);
     setSuccess(`Sold ${tokenAmount.toFixed(6)} ${symbol}`);
-    setAmount("");
     setTimeout(() => setSuccess(""), 2000);
     setMode("info");
   };
@@ -165,7 +164,7 @@ const TokenDetail = ({ symbol, onClose }: TokenDetailProps) => {
         )}
         {mode === "buy" && (
           <div className="flex gap-3">
-            <button onClick={() => { setMode("info"); setAmount(""); }}
+            <button onClick={() => setMode("info")}
               className="flex-1 py-3 rounded-2xl bg-secondary text-foreground font-semibold text-sm">
               Cancel
             </button>
@@ -177,7 +176,7 @@ const TokenDetail = ({ symbol, onClose }: TokenDetailProps) => {
         )}
         {mode === "sell" && (
           <div className="flex gap-3">
-            <button onClick={() => { setMode("info"); setAmount(""); }}
+            <button onClick={() => setMode("info")}
               className="flex-1 py-3 rounded-2xl bg-secondary text-foreground font-semibold text-sm">
               Cancel
             </button>
