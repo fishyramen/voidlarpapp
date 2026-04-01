@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { ArrowLeft, Search, ShoppingCart } from "lucide-react";
+import { ArrowLeft, Search, ShoppingCart, Check } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import { allCoins } from "@/data/coins";
+import { toast } from "sonner"; // Make sure you have sonner installed
 
 const BuyScreen = () => {
   const { setActiveTab, setExploreBuySymbol, tokens, setTokens, addTransaction } = useWallet();
   const [search, setSearch] = useState("");
   const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [buying, setBuying] = useState<string | null>(null); // Track which token is being bought
+  const [justBought, setJustBought] = useState<string | null>(null); // For success animation
 
   const filtered = allCoins.filter(
     c => c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -24,20 +27,37 @@ const BuyScreen = () => {
 
   const totalCost = Object.entries(amounts).reduce((sum, [, val]) => sum + (parseFloat(val) || 0), 0);
 
-  const handleBuyAll = () => {
+  const handleBuyAll = async () => {
     const entries = Object.entries(amounts).filter(([, val]) => parseFloat(val) > 0);
-    if (entries.length === 0) return;
+    if (entries.length === 0) {
+      toast.error("Enter an amount to buy");
+      return;
+    }
 
-    entries.forEach(([symbol, val]) => {
+    let successCount = 0;
+    
+    for (const [symbol, val] of entries) {
       const usdAmount = parseFloat(val);
       const coin = allCoins.find(c => c.symbol === symbol);
-      if (!coin || usdAmount <= 0) return;
+      if (!coin || usdAmount <= 0) continue;
+      
       const tokenAmount = usdAmount / coin.price;
-
+      
+      // Show loading state for this token
+      setBuying(symbol);
+      
+      // Simulate brief delay for feedback (remove in production)
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Update tokens using functional update to ensure fresh state
       setTokens(prev => {
         const exists = prev.find(t => t.symbol === symbol);
         if (exists) {
-          return prev.map(t => t.symbol === symbol ? { ...t, balance: t.balance + tokenAmount } : t);
+          return prev.map(t => 
+            t.symbol === symbol 
+              ? { ...t, balance: t.balance + tokenAmount } 
+              : t
+          );
         }
         return [...prev, {
           symbol: coin.symbol,
@@ -49,16 +69,40 @@ const BuyScreen = () => {
         }];
       });
 
-      addTransaction({ type: "buy", toToken: symbol, amount: tokenAmount, value: usdAmount });
-    });
+      addTransaction({ 
+        type: "buy", 
+        toToken: symbol, 
+        amount: tokenAmount, 
+        value: usdAmount 
+      });
+      
+      successCount++;
+      setBuying(null);
+      setJustBought(symbol);
+      
+      // Clear success animation after 1.5s
+      setTimeout(() => setJustBought(prev => prev === symbol ? null : prev), 1500);
+    }
 
-    // DON'T clear amounts - keep them editable so users can buy again
+    // Show summary toast
+    if (successCount > 0) {
+      toast.success(`Bought $${totalCost.toFixed(2)} of crypto`, {
+        description: successCount === 1 
+          ? `Added to your ${entries[0][0]} balance` 
+          : `Added to ${successCount} tokens`
+      });
+    }
+    
+    // Keep amounts editable - DON'T clear them ✅
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="flex items-center gap-3 px-4 pt-3 pb-2">
-        <button onClick={() => { setExploreBuySymbol(""); setActiveTab("wallet"); }} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
+        <button 
+          onClick={() => { setExploreBuySymbol(""); setActiveTab("wallet"); }} 
+          className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:bg-secondary/80 transition"
+        >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <h2 className="text-base font-semibold text-foreground">Buy Crypto</h2>
@@ -67,8 +111,13 @@ const BuyScreen = () => {
       <div className="px-4 pb-3">
         <div className="flex items-center gap-2 bg-secondary rounded-xl px-3 py-2.5">
           <Search className="w-4 h-4 text-muted-foreground" />
-          <input type="text" placeholder="Search tokens..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none flex-1" />
+          <input 
+            type="text" 
+            placeholder="Search tokens..." 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)}
+            className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none flex-1" 
+          />
         </div>
       </div>
 
@@ -79,14 +128,39 @@ const BuyScreen = () => {
           const tokenAmount = parsedAmount > 0 ? parsedAmount / coin.price : 0;
           const held = tokens.find(t => t.symbol === coin.symbol);
           const currentBalance = held?.balance || 0;
+          const isBuying = buying === coin.symbol;
+          const wasJustBought = justBought === coin.symbol;
 
           return (
-            <div key={coin.symbol} className="mb-2 rounded-2xl bg-secondary p-3">
+            <div 
+              key={coin.symbol} 
+              className={`mb-2 rounded-2xl bg-secondary p-3 transition-all ${
+                wasJustBought ? 'ring-2 ring-success/50 bg-success/5' : ''
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-                    <img src={coin.logo} alt={coin.name} className="w-full h-full object-cover"
-                      onError={(e) => { const el = e.target as HTMLImageElement; el.style.display = "none"; el.parentElement!.innerHTML = `<span class="text-xs font-bold text-foreground">${coin.symbol.charAt(0)}</span>`; }} />
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-muted flex items-center justify-center relative">
+                    <img 
+                      src={coin.logo} 
+                      alt={coin.name} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => { 
+                        const el = e.target as HTMLImageElement; 
+                        el.style.display = "none"; 
+                        el.parentElement!.innerHTML = `<span class="text-xs font-bold text-foreground">${coin.symbol.charAt(0)}</span>`; 
+                      }} 
+                    />
+                    {isBuying && (
+                      <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                    {wasJustBought && !isBuying && (
+                      <div className="absolute inset-0 bg-success/20 flex items-center justify-center rounded-full">
+                        <Check className="w-5 h-5 text-success" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">{coin.name}</p>
@@ -112,7 +186,8 @@ const BuyScreen = () => {
                     value={usdVal}
                     onChange={(e) => setAmount(coin.symbol, e.target.value)}
                     placeholder="0.00"
-                    className="w-full py-2 pl-7 pr-3 rounded-xl bg-background text-foreground text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
+                    disabled={isBuying}
+                    className="w-full py-2 pl-7 pr-3 rounded-xl bg-background text-foreground text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground disabled:opacity-50"
                   />
                 </div>
                 {tokenAmount > 0 && (
@@ -133,10 +208,22 @@ const BuyScreen = () => {
 
       {totalCost > 0 && (
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-2 bg-gradient-to-t from-background via-background to-transparent">
-          <button onClick={handleBuyAll}
-            className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2">
-            <ShoppingCart className="w-4 h-4" />
-            Buy — ${totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          <button 
+            onClick={handleBuyAll}
+            disabled={Object.values(amounts).every(v => !v || parseFloat(v) <= 0) || !!buying}
+            className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-[0.98]"
+          >
+            {buying ? (
+              <>
+                <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                Buying...
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="w-4 h-4" />
+                Buy — ${totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </>
+            )}
           </button>
         </div>
       )}
