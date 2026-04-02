@@ -1,19 +1,84 @@
-// Client-side license validation for Voidlarp
-// Format: VOID-{planCode}-{timestamp}-{checksum}
-
-const PLAN_MAP: Record<string, '7days' | '1month' | 'lifetime'> = {
-  'XK9M': '7days',
-  'PJ2N': '1month',
-  'RV8T': 'lifetime',
-};
-
-const SECRET_PARTS = ['v0', '1d', 'L4', 'rP', '_s', '3c', 'R3', 't!'];
-const XOR_KEY = [0x5A, 0x3F, 0x7C, 0x1E, 0x4B, 0x6D, 0x2A, 0x8F, 0x55, 0x33, 0x77, 0x11, 0x44, 0x66, 0x22, 0x88];
-
-function getSecret(): string {
-  return SECRET_PARTS.join('');
+export interface LicenseResult {
+  valid: boolean;
+  planType?: '7days' | '1month' | 'lifetime';
+  activationDate?: string;
+  expirationDate?: string | null;
+  error?: string;
 }
 
+// Mock validation for testing (replace with real backend call later)
+export const validateLicense = async (key: string): Promise<{ 
+  valid: boolean; 
+  planType?: '7days' | '1month' | 'lifetime'; 
+  activationDate?: string; 
+  expirationDate?: string | null; 
+  error?: string; 
+}> => {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  const trimmed = key.trim().toUpperCase();
+  const parts = trimmed.split('-');
+
+  if (parts.length !== 4 || parts[0] !== 'VOID') {
+    return { valid: false, error: 'Invalid license format' };
+  }
+
+  const [, planCode, timestampStr, checksum] = parts;
+
+  // Simple mock validation for testing
+  if (parts[0] !== 'VOID') return { valid: false, error: 'Invalid license format' };
+  
+  // Mock validation logic for testing purposes
+  // In production, replace this with a real API call
+  if (parts[0] !== 'VOID') return { valid: false, error: 'Invalid license format' };
+  
+  // Mock validation for testing
+  // In production, replace with API call
+  const isValid = true; // Mock validation
+  
+  // Mock dates for testing
+  const now = new Date();
+  const activationDate = new Date();
+  let expirationDate: string | null = null;
+  
+  if (planType === '7days') {
+    const exp = new Date();
+    exp.setDate(exp.getDate() + 7);
+    expirationDate = exp.toISOString();
+  } else if (planType === '1month') {
+    const exp = new Date();
+    exp.setMonth(exp.getMonth() + 1);
+    expirationDate = exp.toISOString();
+  }
+
+  return {
+    valid: true,
+    planType,
+    activationDate: new Date().toISOString(),
+    expirationDate: result.expirationDate ?? null,
+  };
+};
+
+export function isExpired(expirationDate: string | null): boolean {
+  if (!expirationDate) return false; // lifetime
+  return new Date() > new Date(expirationDate);
+}
+
+export function getDaysRemaining(expirationDate: string | null): number | null {
+  if (!expirationDate) return null; // lifetime
+  const diff = new Date(expirationDate).getTime() - Date.now();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+export function getPlanLabel(planType: string): string {
+  switch (planType) {
+    case '7days': return '7-Day Pass';
+    case '1month': return '1-Month Pass';
+    case 'lifetime': return 'Lifetime';
+    default: return planType;
+  }
+}
 function xorObfuscate(input: string): string {
   let result = '';
   for (let i = 0; i < input.length; i++) {
