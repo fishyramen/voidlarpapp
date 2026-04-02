@@ -42,42 +42,26 @@ const Onboarding = () => {
       <div className="w-full max-w-[400px] h-screen sm:h-[850px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
         <AnimatePresence mode="wait">
           {step === 0 && (
-            <motion.div
+            <div
               key="welcome"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col"
             >
               <div className="flex-1 flex flex-col items-center justify-center px-8">
-                {/* Logo - Simple fade in, no complex animation */}
-                <motion.img
+                {/* Logo - No animation, instant appearance */}
+                <img
                   src={voidlarpLogo}
                   alt="Voidlarp"
                   className="w-20 h-20 rounded-2xl mb-6 object-cover"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4 }}
                 />
                 
-                {/* Title - Voidlarp, no description */}
-                <motion.h1
-                  className="text-3xl font-bold text-foreground tracking-tight"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                >
+                {/* Title - Phantom-style font, uppercase, small caps look */}
+                <h1 className="text-3xl font-bold text-foreground tracking-widest uppercase">
                   Voidlarp
-                </motion.h1>
+                </h1>
               </div>
               
-              {/* Buttons - Simple fade in */}
-              <motion.div
-                className="p-6 space-y-3"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-              >
+              {/* Buttons - No animation, instant appearance */}
+              <div className="p-6 space-y-3">
                 <button
                   onClick={() => switchMode(1)}
                   className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
@@ -90,8 +74,8 @@ const Onboarding = () => {
                 >
                   I already have a wallet
                 </button>
-              </motion.div>
-            </motion.div>
+              </div>
+            </div>
           )}
 
           {(step === 1 || step === 2) && (
