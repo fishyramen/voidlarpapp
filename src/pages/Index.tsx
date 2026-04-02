@@ -16,7 +16,6 @@ import ProfileScreen from "@/components/ProfileScreen";
 import SearchOverlay from "@/components/SearchOverlay";
 import TokenDetail from "@/components/TokenDetail";
 import Onboarding from "@/components/Onboarding";
-import SplashScreen from "@/components/SplashScreen";
 import LicenseInput from "@/components/LicenseInput";
 import ExpiredModal from "@/components/ExpiredModal";
 import { useWallet, StoredLicense } from "@/context/WalletContext";
@@ -24,13 +23,8 @@ import { useWallet, StoredLicense } from "@/context/WalletContext";
 const Index = () => {
   const { hasOnboarded, activeTab, license, setLicenseData, isLicenseValid, isLicenseExpired, daysUntilExpiry, clearLicense } = useWallet();
   const [overlay, setOverlay] = useState<"none" | "account" | "settings" | "profile" | "search">("none");
-  const [showSplash, setShowSplash] = useState(true);
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [showLicenseInput, setShowLicenseInput] = useState(false);
-
-  const handleSplashComplete = useCallback(() => setShowSplash(false), []);
-
-  if (showSplash) return <SplashScreen onComplete={handleSplashComplete} />;
 
   // No license at all → force license input
   if (!license) {
@@ -64,7 +58,10 @@ const Index = () => {
     );
   }
 
-  if (!hasOnboarded) return <Onboarding />;
+  // No onboarding yet → show onboarding
+  if (!hasOnboarded) {
+    return <Onboarding />;
+  }
 
   const renderContent = () => {
     if (selectedToken) return (
@@ -142,13 +139,12 @@ const Index = () => {
   };
 
   return (
-  <div className="flex items-center justify-center min-h-screen bg-background p-0 sm:p-4">
-    {/* Mobile-first: Full screen on phones, constrained on desktop */}
-    <div className="w-full h-screen sm:h-[850px] sm:max-w-[400px] sm:rounded-3xl sm:border sm:border-border bg-background sm:shadow-2xl flex flex-col relative overflow-hidden">
-      {renderContent()}
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="w-full max-w-[400px] h-screen sm:h-[850px] sm:max-w-[400px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
+        {renderContent()}
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default Index;
