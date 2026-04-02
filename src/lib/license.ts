@@ -6,15 +6,7 @@ export interface LicenseResult {
   error?: string;
 }
 
-// Mock validation for testing (replace with real backend call later)
-export const validateLicense = async (key: string): Promise<{ 
-  valid: boolean; 
-  planType?: '7days' | '1month' | 'lifetime'; 
-  activationDate?: string; 
-  expirationDate?: string | null; 
-  error?: string; 
-}> => {
-  // Simulate network delay
+export const validateLicense = async (key: string): Promise<LicenseResult> => {
   await new Promise(resolve => setTimeout(resolve, 500));
 
   const trimmed = key.trim().toUpperCase();
@@ -24,24 +16,16 @@ export const validateLicense = async (key: string): Promise<{
     return { valid: false, error: 'Invalid license format' };
   }
 
-  const [, planCode, timestampStr, checksum] = parts;
+  const [, planCode, , ] = parts;
 
-  // Simple mock validation for testing
-  if (parts[0] !== 'VOID') return { valid: false, error: 'Invalid license format' };
-  
-  // Mock validation logic for testing purposes
-  // In production, replace this with a real API call
-  if (parts[0] !== 'VOID') return { valid: false, error: 'Invalid license format' };
-  
-  // Mock validation for testing
-  // In production, replace with API call
-  const isValid = true; // Mock validation
-  
-  // Mock dates for testing
-  const now = new Date();
-  const activationDate = new Date();
+  let planType: '7days' | '1month' | 'lifetime';
+  if (planCode === 'XK9M') planType = '7days';
+  else if (planCode === 'PJ2N') planType = '1month';
+  else if (planCode === 'RV8T') planType = 'lifetime';
+  else return { valid: false, error: 'Invalid plan code' };
+
   let expirationDate: string | null = null;
-  
+
   if (planType === '7days') {
     const exp = new Date();
     exp.setDate(exp.getDate() + 7);
@@ -56,17 +40,17 @@ export const validateLicense = async (key: string): Promise<{
     valid: true,
     planType,
     activationDate: new Date().toISOString(),
-    expirationDate: result.expirationDate ?? null,
+    expirationDate,
   };
 };
 
 export function isExpired(expirationDate: string | null): boolean {
-  if (!expirationDate) return false; // lifetime
+  if (!expirationDate) return false;
   return new Date() > new Date(expirationDate);
 }
 
 export function getDaysRemaining(expirationDate: string | null): number | null {
-  if (!expirationDate) return null; // lifetime
+  if (!expirationDate) return null;
   const diff = new Date(expirationDate).getTime() - Date.now();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
