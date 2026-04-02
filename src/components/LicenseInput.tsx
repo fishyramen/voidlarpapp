@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Key, Loader2, ExternalLink } from "lucide-react";
+import { Key, Loader2, ExternalLink, AlertCircle } from "lucide-react";
 import { validateLicense } from "@/lib/license";
-import voidlarpLogo from "@/assets/voidlarp-logo.jpg";
+import phantomLogo from "@/assets/phantom-logo.png";
 
 interface LicenseInputProps {
   onActivate: (data: { key: string; planType: '7days' | '1month' | 'lifetime'; activationDate: string; expirationDate: string | null }) => void;
@@ -39,7 +39,6 @@ const LicenseInput = ({ onActivate }: LicenseInputProps) => {
         expirationDate: result.expirationDate ?? null,
       });
       
-      // Don't show toast here - WalletContext will show it
     } catch (err) {
       setError("Failed to activate license");
       console.error('Activation error:', err);
@@ -50,23 +49,25 @@ const LicenseInput = ({ onActivate }: LicenseInputProps) => {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <div className="w-full max-w-[400px] h-screen sm:h-[850px] sm:max-w-[400px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
+      <div className="w-full max-w-[400px] h-screen sm:h-[850px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="flex-1 flex flex-col items-center justify-center px-8"
         >
+          {/* Phantom Icon */}
           <motion.div
             className="w-20 h-20 rounded-2xl overflow-hidden mb-6 shadow-lg"
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
           >
-            <img src={voidlarpLogo} alt="Voidlarp" className="w-full h-full object-cover" />
+            <img src={phantomLogo} alt="Phantom" className="w-full h-full object-cover" />
           </motion.div>
 
-          <h1 className="text-2xl font-bold text-foreground mb-1">Activate Voidlarp</h1>
+          {/* Title - Changed to Activate Phantom */}
+          <h1 className="text-2xl font-bold text-foreground mb-1">Activate Phantom</h1>
           <p className="text-sm text-muted-foreground text-center mb-8 max-w-[280px]">
             Enter your license key to continue. Get one at{" "}
             <a href="https://voidlarp.vercel.app" target="_blank" rel="noopener" className="text-primary hover:underline inline-flex items-center gap-0.5">
@@ -111,6 +112,18 @@ const LicenseInput = ({ onActivate }: LicenseInputProps) => {
               "Activate License"
             )}
           </button>
+
+          {/* Warning / Tip Box */}
+          <div className="mt-8 w-full max-w-[280px] rounded-xl bg-secondary p-4 border border-border">
+            <div className="flex gap-3 items-start">
+              <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-foreground font-semibold block mb-1">Save your license key!</span>
+                You will need this key to reactivate your account if you ever log out or switch devices.
+              </p>
+            </div>
+          </div>
+
         </motion.div>
       </div>
     </div>
