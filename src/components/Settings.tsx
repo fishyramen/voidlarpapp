@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, X, Search, ChevronRight, Users, SlidersHorizontal, Shield, Globe, Smile, Layers, Code, HelpCircle, Heart, LogOut, Moon, Sun, Bell, Lock, Key, Eye, Fingerprint, Wifi, WifiOff, ToggleLeft, ToggleRight, CreditCard, AlertTriangle, Check } from "lucide-react";
+import { ArrowLeft, X, Search, ChevronRight, Users, SlidersHorizontal, Shield, Globe, Smile, Layers, Code, HelpCircle, Heart, LogOut, Moon, Sun, Bell, Lock, Key, Eye, Fingerprint, Wifi, WifiOff, ToggleLeft, ToggleRight, CreditCard, AlertTriangle, Check, Trash2, AlertCircle } from "lucide-react";
 import { useWallet } from "@/context/WalletContext";
 import { getPlanLabel } from "@/lib/license";
 import phantomLogo from "@/assets/phantom-logo.png";
@@ -16,6 +16,8 @@ const Settings = ({ onClose }: SettingsProps) => {
   const [view, setView] = useState<SettingsView>("main");
   const [search, setSearch] = useState("");
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deactivateTerms, setDeactivateTerms] = useState({
     noRefund: false,
     balancesReset: false,
@@ -218,9 +220,41 @@ const Settings = ({ onClose }: SettingsProps) => {
               <p className="text-sm text-muted-foreground">No active license</p>
             </div>
           )}
+
+          {/* Danger Zone Section */}
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-destructive mb-3 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Danger Zone
+            </h3>
+            <div className="bg-destructive/5 border border-destructive/20 rounded-2xl overflow-hidden">
+              <button
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-full px-4 py-3.5 flex items-center gap-3 hover:bg-destructive/10 transition-colors border-b border-destructive/20 last:border-0"
+              >
+                <LogOut className="w-5 h-5 text-destructive" />
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-foreground">Log Out of License</p>
+                  <p className="text-xs text-muted-foreground">Return to license activation screen</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full px-4 py-3.5 flex items-center gap-3 hover:bg-destructive/10 transition-colors"
+              >
+                <Trash2 className="w-5 h-5 text-destructive" />
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-foreground">Delete License</p>
+                  <p className="text-xs text-muted-foreground">Permanently remove license from this device</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Deactivation Confirmation Modal with Fixed Checkboxes */}
+        {/* Deactivation Confirmation Modal */}
         {showDeactivateConfirm && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
@@ -235,7 +269,7 @@ const Settings = ({ onClose }: SettingsProps) => {
                 Please confirm you understand the following before deactivating:
               </p>
               
-              {/* Terms Checkboxes - FIXED */}
+              {/* Terms Checkboxes */}
               <div className="space-y-3 mb-6">
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${deactivateTerms.noRefund ? 'bg-primary border-primary' : 'border-border bg-secondary'}`}>
@@ -309,6 +343,98 @@ const Settings = ({ onClose }: SettingsProps) => {
                   className="flex-1 py-2.5 px-4 bg-destructive hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed text-destructive-foreground rounded-xl font-medium transition"
                 >
                   Deactivate
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Log Out Confirmation Modal */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <LogOut className="w-5 h-5 text-destructive" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Log Out of License?</h3>
+              </div>
+              
+              <p className="text-muted-foreground text-sm mb-4">
+                This will log you out and return you to the license activation screen. Your license key will remain saved on this device.
+              </p>
+              
+              <div className="bg-secondary/50 border border-border rounded-xl p-3 mb-6">
+                <p className="text-xs text-muted-foreground">
+                  <span className="text-foreground font-medium">Note:</span> You can log back in anytime without re-entering your license key.
+                </p>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 py-2.5 px-4 bg-secondary hover:bg-secondary/80 rounded-xl font-medium transition text-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowLogoutConfirm(false);
+                    // Clear user session but keep license
+                    localStorage.removeItem('phantom_current_user');
+                    window.location.reload();
+                  }}
+                  className="flex-1 py-2.5 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-medium transition"
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete License Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-card border border-border rounded-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-destructive" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Delete License?</h3>
+              </div>
+              
+              <p className="text-muted-foreground text-sm mb-4">
+                This will <strong>permanently delete</strong> your license from this device. You will need to re-enter your license key to use the app again.
+              </p>
+              
+              <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 mb-6">
+                <div className="flex gap-2 items-start">
+                  <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-destructive">
+                    This action cannot be undone. Make sure you have your license key saved somewhere safe.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-2.5 px-4 bg-secondary hover:bg-secondary/80 rounded-xl font-medium transition text-foreground"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    // Completely remove license
+                    localStorage.removeItem('voidlarp_license');
+                    localStorage.removeItem('phantom_current_user');
+                    window.location.reload();
+                  }}
+                  className="flex-1 py-2.5 px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-medium transition"
+                >
+                  Delete License
                 </button>
               </div>
             </div>
