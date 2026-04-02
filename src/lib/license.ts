@@ -6,7 +6,15 @@ export interface LicenseResult {
   error?: string;
 }
 
-export const validateLicense = async (key: string): Promise<LicenseResult> => {
+// Mock validation for testing (replace with real backend call later)
+export const validateLicense = async (key: string): Promise<{ 
+  valid: boolean; 
+  planType?: '7days' | '1month' | 'lifetime'; 
+  activationDate?: string; 
+  expirationDate?: string | null; 
+  error?: string; 
+}> => {
+  // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500));
 
   const trimmed = key.trim().toUpperCase();
@@ -16,16 +24,24 @@ export const validateLicense = async (key: string): Promise<LicenseResult> => {
     return { valid: false, error: 'Invalid license format' };
   }
 
-  const [, planCode, , ] = parts;
+  const [, planCode, timestampStr, checksum] = parts;
 
-  let planType: '7days' | '1month' | 'lifetime';
-  if (planCode === 'XK9M') planType = '7days';
-  else if (planCode === 'PJ2N') planType = '1month';
-  else if (planCode === 'RV8T') planType = 'lifetime';
-  else return { valid: false, error: 'Invalid plan code' };
-
+  // Simple mock validation for testing
+  if (parts[0] !== 'VOID') return { valid: false, error: 'Invalid license format' };
+  
+  // Mock validation logic for testing purposes
+  // In production, replace this with a real API call
+  if (parts[0] !== 'VOID') return { valid: false, error: 'Invalid license format' };
+  
+  // Mock validation for testing
+  // In production, replace with API call
+  const isValid = true; // Mock validation
+  
+  // Mock dates for testing
+  const now = new Date();
+  const activationDate = new Date();
   let expirationDate: string | null = null;
-
+  
   if (planType === '7days') {
     const exp = new Date();
     exp.setDate(exp.getDate() + 7);
@@ -40,17 +56,17 @@ export const validateLicense = async (key: string): Promise<LicenseResult> => {
     valid: true,
     planType,
     activationDate: new Date().toISOString(),
-    expirationDate,
+    expirationDate: result.expirationDate ?? null,
   };
 };
 
 export function isExpired(expirationDate: string | null): boolean {
-  if (!expirationDate) return false;
+  if (!expirationDate) return false; // lifetime
   return new Date() > new Date(expirationDate);
 }
 
 export function getDaysRemaining(expirationDate: string | null): number | null {
-  if (!expirationDate) return null;
+  if (!expirationDate) return null; // lifetime
   const diff = new Date(expirationDate).getTime() - Date.now();
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
