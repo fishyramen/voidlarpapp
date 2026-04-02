@@ -2,9 +2,13 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@/context/WalletContext";
 import { signUp, signIn } from "@/context/WalletContext";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Key } from "lucide-react";
 
-const Onboarding = () => {
+interface OnboardingProps {
+  showLicenseReminder?: boolean;
+}
+
+const Onboarding = ({ showLicenseReminder = false }: OnboardingProps) => {
   const { setUsername, setHasOnboarded } = useWallet();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -41,17 +45,28 @@ const Onboarding = () => {
       <div className="w-full max-w-[400px] h-screen sm:h-[850px] bg-background rounded-3xl border border-border overflow-hidden flex flex-col shadow-2xl relative">
         <AnimatePresence mode="wait">
           {step === 0 && (
-            <div
-              key="welcome"
-              className="flex-1 flex flex-col"
-            >
+            <div key="welcome" className="flex-1 flex flex-col">
               <div className="flex-1 flex flex-col items-center justify-center px-8">
-                {/* Logo Image - No title */}
+                {/* Logo Image */}
                 <img
                   src="https://i.ibb.co/Xrn213KZ/larp.jpg"
                   alt="Voidlarp"
-                  className="w-32 h-32 rounded-3xl object-cover mb-8"
+                  className="w-32 h-32 rounded-3xl object-cover mb-6"
                 />
+                
+                {/* License Reminder (only on first onboarding) */}
+                {showLicenseReminder && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 mb-4 max-w-[280px]"
+                  >
+                    <Key className="w-4 h-4 text-primary flex-shrink-0" />
+                    <p className="text-xs text-primary/90 text-center">
+                      <strong>Save your license key!</strong> You'll need it to reactivate if you log out.
+                    </p>
+                  </motion.div>
+                )}
               </div>
               
               {/* Buttons */}
@@ -82,17 +97,31 @@ const Onboarding = () => {
             >
               <button
                 onClick={() => switchMode(0)}
-                className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground mb-8 transition-colors"
+                className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground mb-6 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
               
-              <h2 className="text-2xl font-bold text-foreground mb-2">
+              <h2 className="text-2xl font-bold text-foreground mb-1">
                 {step === 1 ? "Create your wallet" : "Welcome back"}
               </h2>
-              <p className="text-muted-foreground text-sm mb-8">
+              <p className="text-muted-foreground text-sm mb-6">
                 {step === 1 ? "Choose a username and password" : "Log in to your wallet"}
               </p>
+
+              {/* License Reminder on form screen too */}
+              {showLicenseReminder && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-start gap-2 bg-primary/10 border border-primary/20 rounded-xl px-3 py-2.5 mb-4"
+                >
+                  <Key className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-primary/90">
+                    Keep your license key safe. You'll need it to reactivate your account.
+                  </p>
+                </motion.div>
+              )}
 
               {error && (
                 <div className="bg-destructive/15 text-destructive text-xs font-medium px-3 py-2.5 rounded-xl mb-4 text-center">
