@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWallet } from "@/context/WalletContext";
 import { signUp, signIn } from "@/context/WalletContext";
-import voidlarpLogo from "@/assets/voidlarp-logo.jpg";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 const Onboarding = () => {
@@ -47,20 +46,15 @@ const Onboarding = () => {
               className="flex-1 flex flex-col"
             >
               <div className="flex-1 flex flex-col items-center justify-center px-8">
-                {/* Logo - No animation, instant appearance */}
+                {/* Logo Image - No title */}
                 <img
-                  src={voidlarpLogo}
+                  src="https://i.ibb.co/Xrn213KZ/larp.jpg"
                   alt="Voidlarp"
-                  className="w-20 h-20 rounded-2xl mb-6 object-cover"
+                  className="w-32 h-32 rounded-3xl object-cover mb-8"
                 />
-                
-                {/* Title - Phantom-style font, uppercase, small caps look */}
-                <h1 className="text-3xl font-bold text-foreground tracking-widest uppercase">
-                  Voidlarp
-                </h1>
               </div>
               
-              {/* Buttons - No animation, instant appearance */}
+              {/* Buttons */}
               <div className="p-6 space-y-3">
                 <button
                   onClick={() => switchMode(1)}
