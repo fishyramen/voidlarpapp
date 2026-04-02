@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import WalletHeader from "@/components/WalletHeader";
 import WalletBalance from "@/components/WalletBalance";
 import ActionButtons from "@/components/ActionButtons";
@@ -21,17 +21,18 @@ import ExpiredModal from "@/components/ExpiredModal";
 import { useWallet, StoredLicense } from "@/context/WalletContext";
 
 const Index = () => {
-  const { hasOnboarded, activeTab, license, setLicenseData, isLicenseValid, isLicenseExpired, daysUntilExpiry, clearLicense } = useWallet();
+  const { hasOnboarded, activeTab, license, setLicenseData, isLicenseExpired, daysUntilExpiry } = useWallet();
   const [overlay, setOverlay] = useState<"none" | "account" | "settings" | "profile" | "search">("none");
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [showLicenseInput, setShowLicenseInput] = useState(false);
 
-  // No license at all → force license input
-  if (!license) {
+  // ALWAYS check license first - even if user was previously onboarded
+  if (!license || showLicenseInput) {
     return (
       <LicenseInput
         onActivate={(data) => {
           setLicenseData(data as StoredLicense);
+          setShowLicenseInput(false);
         }}
       />
     );
@@ -39,16 +40,6 @@ const Index = () => {
 
   // License expired → show undismissable modal
   if (isLicenseExpired) {
-    if (showLicenseInput) {
-      return (
-        <LicenseInput
-          onActivate={(data) => {
-            setLicenseData(data as StoredLicense);
-            setShowLicenseInput(false);
-          }}
-        />
-      );
-    }
     return (
       <ExpiredModal
         daysAgo={daysUntilExpiry !== null ? Math.abs(daysUntilExpiry) : 0}
@@ -58,9 +49,9 @@ const Index = () => {
     );
   }
 
-  // No onboarding yet → show onboarding
+  // Valid license but no onboarding yet → show onboarding WITH license reminder
   if (!hasOnboarded) {
-    return <Onboarding />;
+    return <Onboarding showLicenseReminder={true} />;
   }
 
   const renderContent = () => {
