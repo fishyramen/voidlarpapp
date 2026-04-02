@@ -43,13 +43,6 @@ const Onboarding = ({ showLicenseReminder = false }: OnboardingProps) => {
             <div key="welcome" className="flex-1 flex flex-col">
               <div className="flex-1 flex flex-col items-center justify-center px-8">
                 <img src="https://i.ibb.co/Xrn213KZ/larp.jpg" alt="Voidlarp" className="w-32 h-32 rounded-3xl object-cover mb-6" />
-                {showLicenseReminder && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 mb-4 max-w-[280px]">
-                    <Key className="w-4 h-4 text-primary flex-shrink-0" />
-                    <p className="text-xs text-primary/90 text-center"><strong>Save your license key!</strong> You'll need it to reactivate if you log out.</p>
-                  </motion.div>
-                )}
               </div>
               <div className="p-6 space-y-3">
                 <button onClick={() => switchMode(1)} className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-opacity">Create a new wallet</button>
