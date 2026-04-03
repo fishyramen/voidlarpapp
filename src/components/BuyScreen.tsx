@@ -38,7 +38,10 @@ const BuyScreen = () => {
 
   const handleBuyAll = async () => {
     const entries = Object.entries(amounts).filter(([, val]) => parseFloat(val) > 0);
-    if (entries.length === 0) { toast.error("Enter an amount to buy"); return; }
+    if (entries.length === 0) { 
+      toast.error("Enter an amount to buy", { duration: 3000 }); 
+      return; 
+    }
     
     for (const [symbol, val] of entries) {
       const usdAmount = parseFloat(val);
@@ -52,7 +55,8 @@ const BuyScreen = () => {
       setTimeout(() => setJustBought(prev => prev === symbol ? null : prev), 1500);
     }
     
-    toast.success(`Bought $${totalCost.toFixed(2)} of crypto`);
+    // FIXED: Single toast, 3 second duration
+    toast.success(`Bought $${totalCost.toFixed(2)} of crypto`, { duration: 3000 });
   };
 
   return (
@@ -71,7 +75,7 @@ const BuyScreen = () => {
         </div>
       </div>
       
-      {/* Scrollable list with extra bottom padding for sticky button */}
+      {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto px-3 pb-24">
         {filtered.map(coin => {
           const usdVal = amounts[coin.symbol] || "";
@@ -116,7 +120,7 @@ const BuyScreen = () => {
         {filtered.length === 0 && <div className="flex items-center justify-center py-12"><p className="text-sm text-muted-foreground">No tokens found</p></div>}
       </div>
       
-      {/* Sticky Buy Button - Fixed at bottom, follows user */}
+      {/* Sticky Buy Button */}
       {totalCost > 0 && (
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-2 bg-gradient-to-t from-background via-background to-transparent z-10">
           <button onClick={handleBuyAll} disabled={!!buying}
